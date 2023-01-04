@@ -1,6 +1,7 @@
 #include "mem.hpp"
-#include <iostream>
+
 #include <exception>
+#include <iostream>
 
 void Memory::init() {
     try {

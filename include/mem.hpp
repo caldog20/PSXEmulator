@@ -1,16 +1,15 @@
 #pragma once
-#include "utils.hpp"
-#include <memory>
 #include <array>
+#include <memory>
+
+#include "utils.hpp"
 
 #define BIOS_SIZE (512 * 1024)
 #define RAM_SIZE (2048 * 1024)
 
 class Memory {
   public:
-    Memory() {
-        init();
-    }
+    Memory() { init(); }
     ~Memory() = default;
 
     void init();

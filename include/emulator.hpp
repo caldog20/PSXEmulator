@@ -1,9 +1,9 @@
 #pragma once
 #include <array>
-
-#include "utils.hpp"
-#include "mem.hpp"
 #include <string>
+
+#include "mem.hpp"
+#include "utils.hpp"
 
 class Emulator {
   public:
@@ -20,9 +20,7 @@ class Emulator {
     int framesPassed = 0;
     std::array<u8, width * height * 4> framebuffer;  // An 160x144 RGBA framebuffer
 
-    Emulator() {
-        framebuffer.fill(0xFF);
-    }
+    Emulator() { framebuffer.fill(0xFF); }
 
   private:
     Memory m_mem;
