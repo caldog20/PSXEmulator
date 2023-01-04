@@ -59,6 +59,20 @@ void GUI::showMenuBar() {
                 }
             }
 
+            if (ImGui::MenuItem("Load BIOS", nullptr)) {
+                auto file = tinyfd_openFileDialog("Choose BIOS File",  // File explorer window title
+                                                  "",              // Default directory
+                                                  2,               // Amount of file types
+                                                  romTypes,        // Array of file types
+                                                  "BIOS",          // File type description in file explorer window
+                                                  0);
+
+                if (file != nullptr) {  // Check if file dialog was canceled
+                    const auto path = std::filesystem::path(file);
+                    emulator.loadBios(path.string());
+                }
+            }
+
             if (ImGui::MenuItem("Save state", nullptr)) fmt::print("Save state");
 
             if (ImGui::MenuItem("Load state", nullptr)) fmt::print("Load state");

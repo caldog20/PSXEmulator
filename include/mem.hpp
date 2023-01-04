@@ -1,15 +1,17 @@
 #pragma once
 #include "utils.hpp"
-
+#include <memory>
+#include <array>
 
 #define BIOS_SIZE (512 * 1024)
 #define RAM_SIZE (2048 * 1024)
 
 class Memory {
   public:
-    Memory() = default;
-
-    ~Memory();
+    Memory() {
+        init();
+    }
+    ~Memory() = default;
 
     void init();
 
@@ -22,6 +24,7 @@ class Memory {
     void write32(u32 address, u32 value);
 
   private:
-    u8 *m_ram = nullptr;
-    u8 *m_bios = nullptr;
+    std::unique_ptr<u8[]> m_ram = nullptr;
+    std::unique_ptr<u8[]> m_bios = nullptr;
+    friend class Emulator;
 };
