@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.14...3.25)
 project(PSXEmulator VERSION 0.1)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -52,11 +52,22 @@ include_directories(third-party/sha1)
 include_directories(third-party/mio/single_include)
 include_directories(third-party/SaveFile/include)
 
+# Capstone Library
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library" FORCE)
+set(CAPSTONE_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+set(CAPSTONE_ARCHITECTURE_DEFAULT OFF CACHE BOOL "" FORCE)
+set(CAPSTONE_MIPS_SUPPORT ON CACHE BOOL "MIPS" FORCE)
+
+add_subdirectory(third-party/capstone)
+include_directories(third-party/capstone/include)
+
+
 add_subdirectory(third-party/imgui-sfml)
+add_subdirectory(third-party/calib)
 
 add_executable(${PROJECT_NAME}
     src/main.cpp
-    src/MyEmulator.cpp
+    src/emulator.cpp
     src/GUI/gui.cpp
 
     third-party/imgui/imgui_draw.cpp
@@ -75,7 +86,7 @@ add_executable(${PROJECT_NAME}
 find_package(OpenGL REQUIRED)
 
 if(WIN32)
-    target_link_libraries (${PROJECT_NAME} PRIVATE sfml-system sfml-network sfml-graphics sfml-window Imm32 glu32 ${OPENGL_LIBRARY})
+    target_link_libraries (${PROJECT_NAME} PRIVATE sfml-system sfml-network sfml-graphics sfml-window Imm32 glu32 ${OPENGL_LIBRARY} calib capstone-static)
 else()
-    target_link_libraries (${PROJECT_NAME} PRIVATE sfml-system sfml-network sfml-graphics sfml-window ${OPENGL_LIBRARY})
+    target_link_libraries (${PROJECT_NAME} PRIVATE sfml-system sfml-network sfml-graphics sfml-window ${OPENGL_LIBRARY} calib capstone-static)
 endif()

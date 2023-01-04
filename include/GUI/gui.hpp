@@ -1,23 +1,27 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "imgui.h"
+
+#include "emulator.hpp"
 #include "imgui-SFML.h"
-#include "MyEmulator.hpp"
+#include "imgui.h"
 
 class GUI {
     sf::RenderWindow window;
     sf::Clock deltaClock;
     sf::Texture display;
-    MyEmulator& emulator;
+    Emulator& emulator;
 
-public:
-    GUI (MyEmulator& emulator);
+  public:
+    GUI(Emulator& emulator);
 
-    void update(); // Update the GUI
-    bool isOpen() { return window.isOpen(); } // Shows if the GUI window has been closed or not
+    void update();                             // Update the GUI
+    bool isOpen() { return window.isOpen(); }  // Shows if the GUI window has been closed or not
 
-private:
+  private:
     void showMenuBar();
     void showDisplay();
     void drawGUI();
+
+    bool m_showDemo = false;
+    bool m_showDisassembly = false;
 };
