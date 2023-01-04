@@ -63,7 +63,7 @@ void GUI::showMenuBar() {
 
             if (ImGui::MenuItem("Load state", nullptr)) fmt::print("Load state");
 
-            if (ImGui::MenuItem("Show ImGui Demo", nullptr, m_showDemo))
+            if (ImGui::MenuItem("Show ImGui Demo", nullptr, &m_showDemo))
                 ;
 
             if (ImGui::MenuItem("Quit", nullptr)) {
