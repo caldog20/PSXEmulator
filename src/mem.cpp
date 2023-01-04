@@ -44,5 +44,4 @@ void Memory::write32(u32 address, u32 value) {
 
     u32 real_address = address << 3;
     m_emulator.log("Real Address {:X}\n", real_address);
-
 }

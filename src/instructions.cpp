@@ -23,7 +23,6 @@ void Cpu::SW() {
     m_emulator.log("Imm {:X}\n", m_instruction.imm);
     u32 value = m_regs.get(m_instruction.rt);
     m_emulator.m_mem.write32(address, value);
-
 }
 
 void Cpu::SLL() {

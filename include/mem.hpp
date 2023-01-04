@@ -52,11 +52,7 @@ class Memory {
     const Range<u32> CACHECONTROL = Range<u32>(0xFFFE0130, 4);
     const Range<u32> IO = Range<u32>(0x1F801000, 8 * 1024);
 
-    u32 m_mask[3] = {
-        0x0,
-        0x80,
-        0xA0
-    };
+    u32 m_mask[3] = {0x0, 0x80, 0xA0};
 
     Emulator& m_emulator;
 };

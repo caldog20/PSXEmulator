@@ -18,4 +18,12 @@ static const char* mnemonic_special[64] = {
     "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown",
     "Unknown", "Unknown", "Unknown", "Unknown"};
 
-static const char* mnemonic_gte[64];
+static const char* mnemonic_gte[64] = {
+    "GTEMove", "RTPS",    "Unknown", "Unknown", "Unknown", "Unknown", "NCLIP",   "Unknown", "Unknown", "Unknown",
+    "Unknown", "Unknown", "OP",      "Unknown", "Unknown", "Unknown", "DPCS",    "INTPL",   "MVMVA",   "NCDS",
+    "CDP",     "Unknown", "NCDT",    "Unknown", "Unknown", "Unknown", "Unknown", "NCCS",    "CC",      "Unknown",
+    "NCS",     "Unknown", "NCT",     "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown",
+    "SQR",     "DCPL",    "DPCT",    "Unknown", "Unknown", "AVSZ3",   "AVSZ4",   "Unknown", "RTPT",    "Unknown",
+    "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown",
+    "Unknown", "GPF",     "GPL",     "NCCT",
+};
