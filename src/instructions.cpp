@@ -4,13 +4,21 @@ using Helpers::log;
 using Helpers::panic;
 
 void Cpu::NOP() { log("NOP\n"); }
+
+void Cpu::LUI() { m_regs.set(m_instruction.rt, m_instruction.immlui); }
+
+void Cpu::ORI() {
+    u32 value = m_regs.get(m_instruction.rs) | m_instruction.imm;
+    m_regs.set(m_instruction.rt, value);
+}
+
+// Unimplemented Instructions
+
 void Cpu::Unknown() { panic("Unknown instruction"); }
 void Cpu::REGIMM() { panic("[Unimplemented] RegImm instruction\n"); }
 void Cpu::J() { panic("[Unimplemented] J instruction\n"); }
 void Cpu::JAL() { panic("[Unimplemented] Jal instruction\n"); }
 void Cpu::BEQ() { panic("[Unimplemented] Beq instruction\n"); }
-void Cpu::LUI() { panic("[Unimplemented] LUI instruction\n"); }
-void Cpu::ORI() { panic("[Unimplemented] ORI instruction\n"); }
 void Cpu::SW() { panic("[Unimplemented] SW instruction\n"); }
 void Cpu::Special() { panic("[Unimplemented] SPECIAL instruction\n"); }
 void Cpu::SLL() { panic("[Unimplemented] SLL instruction\n"); }

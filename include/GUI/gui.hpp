@@ -5,6 +5,9 @@
 #include "emulator.hpp"
 #include "imgui-SFML.h"
 #include "imgui.h"
+#include "logger.hpp"
+#include "regviewer.hpp"
+
 class GUI {
     sf::RenderWindow window;
     sf::Clock deltaClock;
@@ -25,4 +28,5 @@ class GUI {
     bool m_showDemo = false;
 
     Disassembly m_disassembly{emulator};
+    RegViewer m_regviewer{emulator};
 };

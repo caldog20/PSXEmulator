@@ -27,32 +27,142 @@ typedef union {
     u32 r[2];
 } spr_t;
 
+typedef union {
+    struct {
+        u32 index;
+        u32 rand;
+        u32 elo0;
+        u32 bpc;
+        u32 context;
+        u32 bda;
+        u32 pmask;
+        u32 dcic;
+        u32 bvaddr;
+        u32 bdam;
+        u32 ehi;
+        u32 bpcm;
+        u32 sr;
+        u32 cause;
+        u32 epc;
+        u32 prid;
+        u32 config;
+        u32 lladdr;
+        u32 watchlo;
+        u32 watchhi;
+        u32 xcontent;
+        u32 rsv1;
+        u32 rsv2;
+        u32 rsv3;
+        u32 rsv4;
+        u32 rsv5;
+        u32 ecc;
+        u32 cacheerr;
+        u32 taglo;
+        u32 taghi;
+        u32 errepc;
+        u32 rsv6;
+    };
+    u32 r[32];
+} copr_t;
+
 struct Regs {
-    gpr_t gpt;
+    gpr_t gpr;
     spr_t spr;
+    copr_t copr;
     u32 pc;
     u32 next_pc;
     u32 ld_target;
     u32 ld_value;
-    u32 instruction;
+    u32 opcode;
 
+    bool writeBack = false;
     void handlePendingLoad();
+
+    void markWbIndex(u32 index) { ld_target = index; }
+
+    void cancelLoad() {
+        if (writeBack) writeBack = false;
+    }
+    void pendingLoad() { writeBack = true; }
+
+    void set(u32 reg, u32 value) { gpr.r[reg] = value; }
+
+    u32 get(u32 reg) { return gpr.r[reg]; }
 };
+
+#define OPCODE(instruction) ((instruction >> 26))
+#define RT(instruction) ((instruction >> 16) & 0x1F)
+#define RS(instruction) ((instruction >> 21) & 0x1F)
+#define IMM(instruction) (instruction & 0xffff)
+#define TAR(instruction) (instruction & 0x03ffffff)
+#define SA(instruction) ((instruction >> 6) & 0x1F)
+#define FN(instruction) ((instruction)&0x3F)
+#define RD(instruction) ((instruction >> 11) & 0x1F)
+#define IMMSE(instruction) (s16(instruction))
+#define IMMLUI(instruction) (instruction << 16)
+#define START_PC (0xbfc00000)
+
+using Helpers::log;
 
 class Cpu {
   public:
     using opfn = void (Cpu::*)();
 
-    Cpu(Emulator& emulator) : m_emulator(emulator) { init(); }
+    explicit Cpu(Emulator& emulator) : m_emulator(emulator) { init(); }
+
     void init();
     void step();
+    void logMnemonic(u32 opcode);
 
-  private:
     Emulator& m_emulator;
     Regs m_regs;
     bool m_loadDelay = false;
     bool m_branchDelay = false;
 
+    struct instruction {
+        u32 ins;
+        u32 opcode;
+        u32 rs;
+        u32 rt;
+        u32 imm;
+        u32 tar;
+        u32 sa;
+        u32 fn;
+        u32 rd;
+        u32 immse;
+        u32 immlui;
+
+        instruction(u32 instruction) : ins(instruction) {
+            opcode = OPCODE(instruction);
+            rs = RS(instruction);
+            rt = RT(instruction);
+            imm = IMM(instruction);
+            fn = FN(instruction);
+            sa = SA(instruction);
+            tar = TAR(instruction);
+            rd = RD(instruction);
+            immse = IMMSE(instruction);
+            immlui = IMMLUI(instruction);
+        }
+
+        void set(u32 instruction) {
+            ins = instruction;
+            opcode = OPCODE(instruction);
+            rs = RS(instruction);
+            rt = RT(instruction);
+            imm = IMM(instruction);
+            fn = FN(instruction);
+            sa = SA(instruction);
+            tar = TAR(instruction);
+            rd = RD(instruction);
+            immse = IMMSE(instruction);
+            immlui = IMMLUI(instruction);
+        }
+    };
+
+    instruction m_instruction{0};
+
+  private:
     void Unknown();
     void Special();
     void REGIMM();

@@ -41,6 +41,14 @@ void GUI::update() {
         m_disassembly.draw();
     }
 
+    if (m_regviewer.m_draw) {
+        m_regviewer.draw();
+    }
+
+    if (emulator.m_logger.m_draw) {
+        emulator.m_logger.draw();
+    }
+
     drawGUI();
 }
 
@@ -98,7 +106,11 @@ void GUI::showMenuBar() {
         }
 
         if (ImGui::BeginMenu("Debug")) {
+            if (ImGui::MenuItem("Logs", nullptr, &emulator.m_logger.m_draw))
+                ;
             if (ImGui::MenuItem("Disassembly", nullptr, &m_disassembly.m_draw))
+                ;
+            if (ImGui::MenuItem("Registers", nullptr, &m_regviewer.m_draw))
                 ;
             ImGui::EndMenu();
         }
