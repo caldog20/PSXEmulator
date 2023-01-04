@@ -80,7 +80,7 @@ add_executable(${PROJECT_NAME}
     third-party/sha1/sha1.cpp
     third-party/fmt/src/os.cc
     third-party/fmt/src/format.cc
-)
+        src/mem.cpp)
 
 # set_property(TARGET MyEmulator PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE) # Enable LTO
 find_package(OpenGL REQUIRED)
