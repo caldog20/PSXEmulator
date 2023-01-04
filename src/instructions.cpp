@@ -1,7 +1,13 @@
 #include "cpu.hpp"
+#include "emulator.hpp"
 
 using Helpers::log;
 using Helpers::panic;
+
+void Cpu::Special() {
+    const auto f = special[m_instruction.fn];
+    (this->*f)();
+}
 
 void Cpu::NOP() { log("NOP\n"); }
 
@@ -12,6 +18,27 @@ void Cpu::ORI() {
     m_regs.set(m_instruction.rt, value);
 }
 
+void Cpu::SW() {
+    u32 address = m_regs.get(m_instruction.rs) + m_instruction.imm;
+    m_emulator.log("Imm {:X}\n", m_instruction.imm);
+    u32 value = m_regs.get(m_instruction.rt);
+    m_emulator.m_mem.write32(address, value);
+
+}
+
+void Cpu::SLL() {
+    if (m_instruction.rt) {
+        m_regs.set(m_instruction.rd, m_instruction.rs << m_instruction.sa);
+    }
+}
+
+void Cpu::ADDIU() {
+    if (m_instruction.rt) {
+        u32 value = m_regs.get(m_instruction.rs) + m_instruction.imm;
+        m_regs.set(m_instruction.rt, value);
+    }
+}
+
 // Unimplemented Instructions
 
 void Cpu::Unknown() { panic("Unknown instruction"); }
@@ -19,10 +46,6 @@ void Cpu::REGIMM() { panic("[Unimplemented] RegImm instruction\n"); }
 void Cpu::J() { panic("[Unimplemented] J instruction\n"); }
 void Cpu::JAL() { panic("[Unimplemented] Jal instruction\n"); }
 void Cpu::BEQ() { panic("[Unimplemented] Beq instruction\n"); }
-void Cpu::SW() { panic("[Unimplemented] SW instruction\n"); }
-void Cpu::Special() { panic("[Unimplemented] SPECIAL instruction\n"); }
-void Cpu::SLL() { panic("[Unimplemented] SLL instruction\n"); }
-void Cpu::ADDIU() { panic("[Unimplemented] ADDIU instruction\n"); }
 void Cpu::OR() { panic("[Unimplemented] OR instruction\n"); }
 void Cpu::ADD() { panic("[Unimplemented] ADD instruction\n"); }
 void Cpu::ADDU() { panic("[Unimplemented] ADDU instruction\n"); }

@@ -5,6 +5,7 @@
 void Emulator::step() {
     log("Step\n");
     m_cpu.step();
+    log("\n");
 }
 
 void Emulator::runFrame() { log("Frame {}\n", framesPassed++); }

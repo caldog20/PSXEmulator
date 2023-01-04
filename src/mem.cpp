@@ -30,3 +30,19 @@ u32 Memory::read32(u32 address) {
     m_emulator.log("Unmatched memory region at address {:X}", address);
     return 0;
 }
+
+void Memory::write32(u32 address, u32 value) {
+    u32 page = address >> 29;
+    m_emulator.log("write32 Address: {:X} Page: {:X} Value: {:X}\n", address, page, value);
+
+    if (MEMCONTROL.contains(address)) {
+        u32 offset = MEMCONTROL.offset(address);
+        m_emulator.log("Write to MEMCONTROL address: {:X}, offset: {:X}, value: {:X}\n", address, offset, value);
+        m_ram[offset] = value;
+        return;
+    }
+
+    u32 real_address = address << 3;
+    m_emulator.log("Real Address {:X}\n", real_address);
+
+}

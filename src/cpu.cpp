@@ -21,7 +21,7 @@ void Cpu::step() {
     m_regs.gpr.zero = 0;
     m_instruction.set(m_emulator.m_mem.read32(m_regs.pc));
     m_emulator.log("Instruction: {:X}\n", m_instruction.ins);
-    logMnemonic(m_instruction.opcode);
+    logMnemonic();
 
     // Lookup instruction in basic LUT
     const auto bd = basic[m_instruction.opcode];
@@ -31,7 +31,7 @@ void Cpu::step() {
     m_regs.pc += 4;
 }
 
-void Cpu::logMnemonic(u32 opcode) {
+void Cpu::logMnemonic() {
     const char* mnemonic = "";
     if (m_instruction.opcode == 0) {
         mnemonic = mnemonic_special[m_instruction.fn];

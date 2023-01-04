@@ -108,11 +108,11 @@ class Cpu {
   public:
     using opfn = void (Cpu::*)();
 
-    explicit Cpu(Emulator& emulator) : m_emulator(emulator) { init(); }
+    Cpu(Emulator& emulator) : m_emulator(emulator) { init(); }
 
     void init();
     void step();
-    void logMnemonic(u32 opcode);
+    void logMnemonic();
 
     Emulator& m_emulator;
     Regs m_regs;
