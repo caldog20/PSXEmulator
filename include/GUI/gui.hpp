@@ -1,10 +1,10 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
+#include "disassembly.hpp"
 #include "emulator.hpp"
 #include "imgui-SFML.h"
 #include "imgui.h"
-
 class GUI {
     sf::RenderWindow window;
     sf::Clock deltaClock;
@@ -23,5 +23,6 @@ class GUI {
     void drawGUI();
 
     bool m_showDemo = false;
-    bool m_showDisassembly = false;
+
+    Disassembly m_disassembly{emulator};
 };

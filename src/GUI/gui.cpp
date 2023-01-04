@@ -37,6 +37,10 @@ void GUI::update() {
         ImGui::ShowDemoWindow();
     }
 
+    if (m_disassembly.m_draw) {
+        m_disassembly.draw();
+    }
+
     drawGUI();
 }
 
@@ -94,7 +98,7 @@ void GUI::showMenuBar() {
         }
 
         if (ImGui::BeginMenu("Debug")) {
-            if (ImGui::MenuItem("Disassembly", nullptr, m_showDisassembly))
+            if (ImGui::MenuItem("Disassembly", nullptr, &m_disassembly.m_draw))
                 ;
             ImGui::EndMenu();
         }

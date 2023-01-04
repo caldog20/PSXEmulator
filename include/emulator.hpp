@@ -2,6 +2,7 @@
 #include <array>
 #include <string>
 
+#include "cpu.hpp"
 #include "mem.hpp"
 #include "utils.hpp"
 
@@ -23,5 +24,7 @@ class Emulator {
     Emulator() { framebuffer.fill(0xFF); }
 
   private:
+    friend class Disassembly;
     Memory m_mem;
+    Cpu m_cpu{*this};
 };

@@ -26,4 +26,5 @@ class Memory {
     std::unique_ptr<u8[]> m_ram = nullptr;
     std::unique_ptr<u8[]> m_bios = nullptr;
     friend class Emulator;
+    friend class Disassembly;
 };
