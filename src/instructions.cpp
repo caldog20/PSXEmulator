@@ -38,14 +38,22 @@ void Cpu::ADDIU() {
     }
 }
 
+void Cpu::J() {
+    m_branchDelay = true;
+    m_regs.jumppc = (m_regs.pc & 0xf0000000) | (m_instruction.tar << 2);
+}
+
+void Cpu::OR() {
+    u32 value = m_regs.get(m_instruction.rs) | m_regs.get(m_instruction.rt);
+    m_regs.set(m_instruction.rd, value);
+}
+
 // Unimplemented Instructions
 
 void Cpu::Unknown() { panic("Unknown instruction"); }
 void Cpu::REGIMM() { panic("[Unimplemented] RegImm instruction\n"); }
-void Cpu::J() { panic("[Unimplemented] J instruction\n"); }
 void Cpu::JAL() { panic("[Unimplemented] Jal instruction\n"); }
 void Cpu::BEQ() { panic("[Unimplemented] Beq instruction\n"); }
-void Cpu::OR() { panic("[Unimplemented] OR instruction\n"); }
 void Cpu::ADD() { panic("[Unimplemented] ADD instruction\n"); }
 void Cpu::ADDU() { panic("[Unimplemented] ADDU instruction\n"); }
 void Cpu::AND() { panic("[Unimplemented] AND instruction\n"); }

@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
+#include "debuginfo.hpp"
 #include "disassembly.hpp"
 #include "emulator.hpp"
 #include "imgui-SFML.h"
@@ -29,4 +30,5 @@ class GUI {
 
     Disassembly m_disassembly{emulator};
     RegViewer m_regviewer{emulator};
+    DebugInfo m_debuginfo{emulator};
 };

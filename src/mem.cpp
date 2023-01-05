@@ -2,6 +2,7 @@
 
 #include <exception>
 #include <iostream>
+#include <memory>
 
 #include "emulator.hpp"
 
@@ -13,6 +14,9 @@ void Memory::init() {
         std::cerr << "Error allocating memory" << std::endl;
     }
 }
+
+void Memory::reset() { std::memset(m_ram.get(), 0, RAM_SIZE); }
+
 u32 Memory::read32(u32 address) {
     if (address % 4 != 0) m_emulator.log("Unaligned read32 at address {:X}", address);
 

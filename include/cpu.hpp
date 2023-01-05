@@ -70,6 +70,7 @@ struct Regs {
     spr_t spr;
     copr_t copr;
     u32 pc;
+    u32 jumppc;
     u32 next_pc;
     u32 ld_target;
     u32 ld_value;
@@ -88,6 +89,11 @@ struct Regs {
     void set(u32 reg, u32 value) { gpr.r[reg] = value; }
 
     u32 get(u32 reg) { return gpr.r[reg]; }
+
+    void nextpc() {
+        pc += 4;
+        next_pc += 4;
+    }
 };
 
 #define OPCODE(instruction) ((instruction >> 26))
@@ -113,11 +119,14 @@ class Cpu {
     void init();
     void step();
     void logMnemonic();
+    void fetch();
+    void reset();
 
     Emulator& m_emulator;
     Regs m_regs;
     bool m_loadDelay = false;
     bool m_branchDelay = false;
+    bool m_inBranchDelaySlot = false;
 
     struct instruction {
         u32 ins;

@@ -5,7 +5,7 @@
 #include "fmt/format.h"       // For fmt::print
 #include "tinyfiledialogs.h"  // For file explorer
 
-GUI::GUI(Emulator& emulator) : window(sf::VideoMode(800, 600), "SFML window"), emulator(emulator) {
+GUI::GUI(Emulator& emulator) : window(sf::VideoMode(1366, 768), "SFML window"), emulator(emulator) {
     window.setFramerateLimit(60);  // cap FPS to 60
     ImGui::SFML::Init(window);     // Init Imgui-SFML
     display.create(Emulator::width, Emulator::height);
@@ -47,6 +47,10 @@ void GUI::update() {
 
     if (emulator.m_logger.m_draw) {
         emulator.m_logger.draw();
+    }
+
+    if (m_debuginfo.m_draw) {
+        m_debuginfo.draw();
     }
 
     drawGUI();
@@ -106,6 +110,8 @@ void GUI::showMenuBar() {
         }
 
         if (ImGui::BeginMenu("Debug")) {
+            if (ImGui::MenuItem("Debug", nullptr, &m_debuginfo.m_draw))
+                ;
             if (ImGui::MenuItem("Logs", nullptr, &emulator.m_logger.m_draw))
                 ;
             if (ImGui::MenuItem("Disassembly", nullptr, &m_disassembly.m_draw))

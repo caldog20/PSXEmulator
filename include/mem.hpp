@@ -32,6 +32,7 @@ class Memory {
     ~Memory() = default;
 
     void init();
+    void reset();
 
     u8 read8(u32 address);
     u16 read16(u32 address);
