@@ -5,7 +5,7 @@
 #include "fmt/format.h"       // For fmt::print
 #include "tinyfiledialogs.h"  // For file explorer
 
-GUI::GUI(Emulator& emulator) : window(sf::VideoMode(1366, 768), "SFML window"), emulator(emulator) {
+GUI::GUI(Emulator& emulator) : window(sf::VideoMode(1366, 768), "PSX Emulator"), emulator(emulator) {
     window.setFramerateLimit(60);  // cap FPS to 60
     ImGui::SFML::Init(window);     // Init Imgui-SFML
     display.create(Emulator::width, Emulator::height);
@@ -145,7 +145,7 @@ void GUI::showDisplay() {
 }
 
 void GUI::drawGUI() {
-    window.clear(sf::Color(115, 140, 153, 255));  // Clear window with turquoise
-    ImGui::SFML::Render(window);                  // Render ImGui contents
-    window.display();                             // Display ImGui contents
+    window.clear(sf::Color(69, 137, 224, 0.8));  // Clear window with turquoise
+    ImGui::SFML::Render(window);                 // Render ImGui contents
+    window.display();                            // Display ImGui contents
 }

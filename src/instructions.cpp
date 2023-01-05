@@ -48,6 +48,22 @@ void Cpu::OR() {
     m_regs.set(m_instruction.rd, value);
 }
 
+void Cpu::COP0() {
+    switch (m_instruction.rs) {
+        case 0:
+            MFC0();
+            break;
+        case 4:
+            MTC0();
+            break;
+        case 16:
+            RFE();
+            break;
+        default:
+            m_emulator.log("Unimplemented COP0 instruction {:#x}\n", m_instruction.opcode);
+    }
+}
+
 // Unimplemented Instructions
 
 void Cpu::Unknown() { panic("Unknown instruction"); }
@@ -65,7 +81,6 @@ void Cpu::ADDI() { ADDIU(); }
 void Cpu::BNE() { panic("[Unimplemented] BNE instruction\n"); }
 void Cpu::BREAK() { panic("[Unimplemented] BREAK instruction\n"); }
 void Cpu::CFC2() { panic("[Unimplemented] CFC2 instruction\n"); }
-void Cpu::COP0() { panic("[Unimplemented] COP0 instruction\n"); }
 void Cpu::COP2() { panic("[Unimplemented] COP2 instruction\n"); }
 void Cpu::CTC2() { panic("[Unimplemented] CTC2 instruction\n"); }
 void Cpu::DIV() { panic("[Unimplemented] DIV instruction\n"); }

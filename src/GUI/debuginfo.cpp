@@ -20,7 +20,6 @@ void DebugInfo::draw() {
     if (ImGui::Button("Stop")) m_emulator.isRunning = false;
     ImGui::SameLine();
     if (ImGui::Button("Reset")) m_emulator.reset();
-    if (ImGui::Button("Fetch")) m_emulator.m_cpu.fetch();
 
     ImGui::Text("Current PC: 0x%08x", m_emulator.m_cpu.m_regs.pc);
     ImGui::Text("Current Instruction: 0x%08x", curIns.ins);
