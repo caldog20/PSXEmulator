@@ -79,8 +79,9 @@ add_executable(${PROJECT_NAME}
     third-party/tinyfiledialogs/tinyfiledialogs.c
     third-party/sha1/sha1.cpp
     third-party/fmt/src/os.cc
-    third-party/fmt/src/format.cc
-        src/mem.cpp src/cpu.cpp src/GUI/disassembly.cpp src/instructions.cpp src/gte_instructions.cpp src/GUI/regviewer.cpp src/GUI/logger.cpp src/GUI/debuginfo.cpp)
+    third-party/fmt/src/format.cc src/mem.cpp src/cpu.cpp src/GUI/disassembly.cpp
+    src/instructions.cpp src/gte_instructions.cpp src/GUI/regviewer.cpp src/GUI/logger.cpp
+    src/GUI/debuginfo.cpp src/GUI/memviewer.cpp)
 
 # set_property(TARGET MyEmulator PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE) # Enable LTO
 find_package(OpenGL REQUIRED)

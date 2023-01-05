@@ -6,8 +6,8 @@
 #include "tinyfiledialogs.h"  // For file explorer
 
 GUI::GUI(Emulator& emulator) : window(sf::VideoMode(1366, 768), "PSX Emulator"), emulator(emulator) {
-    window.setFramerateLimit(60);  // cap FPS to 60
-    ImGui::SFML::Init(window);     // Init Imgui-SFML
+    // window.setFramerateLimit(60);  // cap FPS to 60
+    ImGui::SFML::Init(window);  // Init Imgui-SFML
     display.create(Emulator::width, Emulator::height);
 
     auto& io = ImGui::GetIO();                             // Set some ImGui options
@@ -51,6 +51,10 @@ void GUI::update() {
 
     if (m_debuginfo.m_draw) {
         m_debuginfo.draw();
+    }
+
+    if (m_memviewer.m_draw) {
+        m_memviewer.draw();
     }
 
     drawGUI();
@@ -106,18 +110,16 @@ void GUI::showMenuBar() {
         if (ImGui::BeginMenu("Emulation")) {
             if (ImGui::MenuItem("Step", nullptr)) emulator.step();
             ImGui::MenuItem("Run", nullptr, &emulator.isRunning);
+            ImGui::MenuItem("Enable Logs", nullptr, &emulator.m_enableLog);
             ImGui::EndMenu();
         }
 
         if (ImGui::BeginMenu("Debug")) {
-            if (ImGui::MenuItem("Debug", nullptr, &m_debuginfo.m_draw))
-                ;
-            if (ImGui::MenuItem("Logs", nullptr, &emulator.m_logger.m_draw))
-                ;
-            if (ImGui::MenuItem("Disassembly", nullptr, &m_disassembly.m_draw))
-                ;
-            if (ImGui::MenuItem("Registers", nullptr, &m_regviewer.m_draw))
-                ;
+            ImGui::MenuItem("Debug", nullptr, &m_debuginfo.m_draw);
+            ImGui::MenuItem("Logs", nullptr, &emulator.m_logger.m_draw);
+            ImGui::MenuItem("Disassembly", nullptr, &m_disassembly.m_draw);
+            ImGui::MenuItem("Registers", nullptr, &m_regviewer.m_draw);
+            ImGui::MenuItem("Memory", nullptr, &m_memviewer.m_draw);
             ImGui::EndMenu();
         }
 
@@ -145,7 +147,7 @@ void GUI::showDisplay() {
 }
 
 void GUI::drawGUI() {
-    window.clear(sf::Color(69, 137, 224, 0.8));  // Clear window with turquoise
-    ImGui::SFML::Render(window);                 // Render ImGui contents
-    window.display();                            // Display ImGui contents
+    window.clear(sf::Color(69, 137, 224, 1));  // Clear window with turquoise
+    ImGui::SFML::Render(window);               // Render ImGui contents
+    window.display();                          // Display ImGui contents
 }

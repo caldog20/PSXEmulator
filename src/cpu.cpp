@@ -24,8 +24,7 @@ void Cpu::reset() {
 void Cpu::fetch() {
     m_regs.gpr.zero = 0;
     m_instruction.set(m_emulator.m_mem.read32(m_regs.pc));
-    m_emulator.log("Current PC: {:X}\n", m_regs.pc);
-    m_emulator.log("Instruction: {:X}\n", m_instruction.ins);
+    m_emulator.log("Current PC: {:#x} Instruction: {:#x}\n", m_regs.pc, m_instruction.ins);
     logMnemonic();
 }
 
@@ -34,6 +33,16 @@ void Cpu::step() {
     const auto bd = basic[m_instruction.opcode];
     // Execute the function pointed too by LUT pointer
     (this->*bd)();
+
+    if (m_loadDelay && m_inLoadDelaySlot) {
+        if (m_instruction.rt == m_regs.ld_target) {
+            return;
+        }
+
+        m_regs.set(m_regs.ld_target, m_regs.ld_value);
+        m_loadDelay = false;
+        m_inLoadDelaySlot = false;
+    }
 
     if (m_branchDelay && m_inBranchDelaySlot) {
         m_regs.pc = m_regs.jumppc;
@@ -47,6 +56,10 @@ void Cpu::step() {
 
     if (m_branchDelay) {
         m_inBranchDelaySlot = true;
+    }
+
+    if (m_loadDelay) {
+        m_inLoadDelaySlot = true;
     }
 
     m_regs.nextpc();

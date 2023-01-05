@@ -87,8 +87,10 @@ struct Regs {
     void pendingLoad() { writeBack = true; }
 
     void set(u32 reg, u32 value) { gpr.r[reg] = value; }
+    void setcopr(u32 reg, u32 value) { copr.r[reg] = value; }
 
     u32 get(u32 reg) { return gpr.r[reg]; }
+    u32 getcopr(u32 reg) { return copr.r[reg]; }
 
     void nextpc() {
         pc += 4;
@@ -99,6 +101,7 @@ struct Regs {
 #define OPCODE(instruction) ((instruction >> 26))
 #define RT(instruction) ((instruction >> 16) & 0x1F)
 #define RS(instruction) ((instruction >> 21) & 0x1F)
+#define IM(instruction) ((u16)instruction)
 #define IMM(instruction) (instruction & 0xffff)
 #define TAR(instruction) (instruction & 0x03ffffff)
 #define SA(instruction) ((instruction >> 6) & 0x1F)
@@ -106,6 +109,7 @@ struct Regs {
 #define RD(instruction) ((instruction >> 11) & 0x1F)
 #define IMMSE(instruction) (s16(instruction))
 #define IMMLUI(instruction) (instruction << 16)
+// #define BT(pc) ((s16)IM * 4 + pc)
 #define START_PC (0xbfc00000)
 
 using Helpers::log;
@@ -125,6 +129,7 @@ class Cpu {
     Emulator& m_emulator;
     Regs m_regs;
     bool m_loadDelay = false;
+    bool m_inLoadDelaySlot = false;
     bool m_branchDelay = false;
     bool m_inBranchDelaySlot = false;
 
@@ -138,6 +143,7 @@ class Cpu {
         u32 sa;
         u32 fn;
         u32 rd;
+        u32 im;
         u32 immse;
         u32 immlui;
 
@@ -150,6 +156,7 @@ class Cpu {
             sa = SA(instruction);
             tar = TAR(instruction);
             rd = RD(instruction);
+            im = IM(instruction);
             immse = IMMSE(instruction);
             immlui = IMMLUI(instruction);
         }
@@ -164,6 +171,7 @@ class Cpu {
             sa = SA(instruction);
             tar = TAR(instruction);
             rd = RD(instruction);
+            im = IM(instruction);
             immse = IMMSE(instruction);
             immlui = IMMLUI(instruction);
         }

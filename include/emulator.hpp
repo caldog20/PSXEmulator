@@ -25,7 +25,9 @@ class Emulator {
     template <typename... Args>
     void log(const char* fmt, const Args&... args) {
         Helpers::log(fmt, args...);
-        m_logger.AddLog(fmt, args...);
+        if (m_enableLog) {
+            m_logger.AddLog(fmt, args...);
+        }
     }
 
     bool isRunning = false;
@@ -37,4 +39,6 @@ class Emulator {
     Memory m_mem{*this};
     Cpu m_cpu{*this};
     Logger m_logger;
+
+    bool m_enableLog = true;
 };

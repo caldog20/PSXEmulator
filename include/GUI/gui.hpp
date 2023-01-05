@@ -7,6 +7,7 @@
 #include "imgui-SFML.h"
 #include "imgui.h"
 #include "logger.hpp"
+#include "memviewer.hpp"
 #include "regviewer.hpp"
 
 class GUI {
@@ -31,4 +32,5 @@ class GUI {
     Disassembly m_disassembly{emulator};
     RegViewer m_regviewer{emulator};
     DebugInfo m_debuginfo{emulator};
+    MemViewer m_memviewer{emulator};
 };

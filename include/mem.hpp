@@ -6,7 +6,7 @@
 class Emulator;
 
 #define BIOS_SIZE (0x80000)
-#define RAM_SIZE (0x80000000)
+#define RAM_SIZE (0x00800000)
 #define KUSEG_SIZE (0x80000000)
 #define KSEG0_SIZE (0x20000000)
 #define KSEG1_SIZE (0x20000000)

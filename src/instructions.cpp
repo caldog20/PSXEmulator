@@ -20,7 +20,7 @@ void Cpu::ORI() {
 
 void Cpu::SW() {
     u32 address = m_regs.get(m_instruction.rs) + m_instruction.imm;
-    m_emulator.log("Imm {:X}\n", m_instruction.imm);
+    m_emulator.log("Imm {:#x}\n", m_instruction.imm);
     u32 value = m_regs.get(m_instruction.rt);
     m_emulator.m_mem.write32(address, value);
 }
@@ -30,6 +30,9 @@ void Cpu::SLL() {
         m_regs.set(m_instruction.rd, m_instruction.rs << m_instruction.sa);
     }
 }
+
+// TODO: Implement overflow exceptions for ADDI
+void Cpu::ADDI() { ADDIU(); }
 
 void Cpu::ADDIU() {
     if (m_instruction.rt) {
@@ -51,17 +54,59 @@ void Cpu::OR() {
 void Cpu::COP0() {
     switch (m_instruction.rs) {
         case 0:
+            m_emulator.log("MFC0\n");
             MFC0();
             break;
         case 4:
+            m_emulator.log("MTC0\n");
             MTC0();
             break;
         case 16:
+            m_emulator.log("RFE\n");
             RFE();
             break;
         default:
             m_emulator.log("Unimplemented COP0 instruction {:#x}\n", m_instruction.opcode);
     }
+}
+
+void Cpu::MTC0() {
+    switch (m_instruction.rd) {
+        case 12: {
+            u32 value = m_regs.gpr.r[m_instruction.rt];
+            m_regs.setcopr(m_instruction.rt, value);
+            break;
+        }
+        default:
+            m_emulator.log("MTC0 unmatched cop0 register\n");
+    }
+}
+
+void Cpu::BNE() {
+    u32 rs = m_regs.get(m_instruction.rs);
+    u32 rt = m_regs.get(m_instruction.rt);
+
+    if (rs == rt) return;
+
+    m_branchDelay = true;
+    m_regs.jumppc = m_instruction.immse * 4 + m_regs.pc + 4;
+}
+
+void Cpu::LW() {
+    if ((m_regs.copr.sr & 0x10000) != 0) {
+        // Cache is isolated , ignore write
+        m_emulator.log("Cache Isolated\n");
+        return;
+    }
+
+    u32 imm = m_instruction.immse;
+    u32 rs = m_instruction.rs;
+    m_regs.ld_target = m_instruction.rt;
+
+    u32 addr = m_regs.get(rs) + imm;
+
+    m_regs.ld_value = m_emulator.m_mem.read32(addr);
+    m_loadDelay = true;
 }
 
 // Unimplemented Instructions
@@ -76,9 +121,6 @@ void Cpu::AND() { panic("[Unimplemented] AND instruction\n"); }
 void Cpu::ANDI() { panic("[Unimplemented] ANDI instruction\n"); }
 void Cpu::BGTZ() { panic("[Unimplemented] BGTZ instruction\n"); }
 void Cpu::BLEZ() { panic("[Unimplemented] BLEZ instruction\n"); }
-// TODO: Implement overflow exceptions for ADDI
-void Cpu::ADDI() { ADDIU(); }
-void Cpu::BNE() { panic("[Unimplemented] BNE instruction\n"); }
 void Cpu::BREAK() { panic("[Unimplemented] BREAK instruction\n"); }
 void Cpu::CFC2() { panic("[Unimplemented] CFC2 instruction\n"); }
 void Cpu::COP2() { panic("[Unimplemented] COP2 instruction\n"); }
@@ -91,7 +133,6 @@ void Cpu::LB() { panic("[Unimplemented] LB instruction\n"); }
 void Cpu::LBU() { panic("[Unimplemented] LBU instruction\n"); }
 void Cpu::LH() { panic("[Unimplemented] LH instruction\n"); }
 void Cpu::LHU() { panic("[Unimplemented] LHU instruction\n"); }
-void Cpu::LW() { panic("[Unimplemented] LW instruction\n"); }
 void Cpu::LWC2() { panic("[Unimplemented] LWC2 instruction\n"); }
 void Cpu::LWL() { panic("[Unimplemented] LWL instruction\n"); }
 void Cpu::LWR() { panic("[Unimplemented] LWR instruction\n"); }
@@ -99,7 +140,6 @@ void Cpu::MFC0() { panic("[Unimplemented] MFC0 instruction\n"); }
 void Cpu::MFC2() { panic("[Unimplemented] MFC2 instruction\n"); }
 void Cpu::MFHI() { panic("[Unimplemented] MFHI instruction\n"); }
 void Cpu::MFLO() { panic("[Unimplemented] MFLO instruction\n"); }
-void Cpu::MTC0() { panic("[Unimplemented] MTC0 instruction\n"); }
 void Cpu::MTC2() { panic("[Unimplemented] MTC2 instruction\n"); }
 void Cpu::MTHI() { panic("[Unimplemented] MTHI instruction\n"); }
 void Cpu::MTLO() { panic("[Unimplemented] MTLO instruction\n"); }
