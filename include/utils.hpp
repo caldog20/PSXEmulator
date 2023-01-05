@@ -20,6 +20,21 @@ using s32 = std::int32_t;
 using s64 = std::int64_t;
 
 namespace Helpers {
+
+template <typename T>
+struct Range {
+    Range(T begin, T size) : start(begin), length(size) {
+        static_assert(std::is_integral<T>::value, "Range should take an unsigned integer type");
+    }
+
+    inline bool contains(u32 addr) const { return (addr >= start && addr < start + length); }
+
+    inline u32 offset(u32 addr) const { return addr - start; }
+
+    T start = 0;
+    T length = 0;
+};
+
 template <typename... Args>
 [[noreturn]] static void panic(const char* fmt, const Args&... args) {
     fmt::print(fg(fmt::color::red), fmt, args...);

@@ -9,10 +9,20 @@ class MemViewer {
     void draw();
     void walkBios();
     void walkRam();
+    void walkScratch();
+    void walkHw();
+    void walkPara();
+
+    enum REGION { BIOS, RAM, SCRATCHPAD, HWREG, PARA };
+
+    void search(REGION region, u32 address);
 
     void clear() {
-        m_biosMem.clear();
-        m_mainMem.clear();
+        m_bios.clear();
+        m_ram.clear();
+        m_hw.clear();
+        m_scratch.clear();
+        m_para.clear();
     };
 
     bool m_draw = false;
@@ -20,6 +30,9 @@ class MemViewer {
   private:
     Emulator& m_emulator;
 
-    std::vector<u32> m_biosMem;
-    std::vector<u32> m_mainMem;
+    std::vector<u32> m_bios;
+    std::vector<u32> m_ram;
+    std::vector<u32> m_hw;
+    std::vector<u32> m_scratch;
+    std::vector<u32> m_para;
 };
