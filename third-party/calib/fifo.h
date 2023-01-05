@@ -1,7 +1,3 @@
-//
-// Created by Caleb Yates on 12/16/22.
-//
-
 #pragma once
 
 #include <queue>
@@ -10,6 +6,7 @@
 #include <atomic>
 #include <optional>
 #include <condition_variable>
+
 
 namespace calib {
 
