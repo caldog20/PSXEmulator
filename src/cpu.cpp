@@ -34,6 +34,9 @@ void Cpu::step() {
     // Execute the function pointed too by LUT pointer
     (this->*bd)();
 
+    m_regs.count++;
+    m_regs.cycles++;
+
     if (m_loadDelay && m_inLoadDelaySlot) {
         if (m_instruction.rt == m_regs.ld_target) {
             return;
@@ -67,11 +70,13 @@ void Cpu::step() {
 }
 
 void Cpu::logMnemonic() {
-    const char* mnemonic = "";
-    if (m_instruction.opcode == 0) {
-        mnemonic = mnemonic_special[m_instruction.fn];
-    } else {
-        mnemonic = mnemonic_basic[m_instruction.opcode];
+    if (m_emulator.m_enableLog) {
+        const char* mnemonic = "";
+        if (m_instruction.opcode == 0) {
+            mnemonic = mnemonic_special[m_instruction.fn];
+        } else {
+            mnemonic = mnemonic_basic[m_instruction.opcode];
+        }
+        m_emulator.log("{}\n", mnemonic);
     }
-    m_emulator.log("{}\n", mnemonic);
 }

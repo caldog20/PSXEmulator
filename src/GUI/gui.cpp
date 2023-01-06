@@ -5,9 +5,11 @@
 #include "fmt/format.h"       // For fmt::print
 #include "tinyfiledialogs.h"  // For file explorer
 
+#define REFRESH_COUNT 50000
+
 GUI::GUI(Emulator& emulator) : window(sf::VideoMode(1366, 768), "PSX Emulator"), emulator(emulator) {
-    // window.setFramerateLimit(60);  // cap FPS to 60
-    ImGui::SFML::Init(window);  // Init Imgui-SFML
+    window.setFramerateLimit(60);  // cap FPS to 60
+    ImGui::SFML::Init(window);     // Init Imgui-SFML
     display.create(Emulator::width, Emulator::height);
 
     auto& io = ImGui::GetIO();                             // Set some ImGui options
@@ -26,7 +28,10 @@ void GUI::update() {
         if (event.type == sf::Event::Closed) window.close();
     }
 
-    if (emulator.isRunning) emulator.runFrame();
+    while (emulator.isRunning && emulator.m_cpu.m_regs.cycles < REFRESH_COUNT) {
+        emulator.runFrame();
+    }
+    emulator.m_cpu.m_regs.cycles = 0;
 
     ImGui::SFML::Update(window, deltaClock.restart());  // Update imgui-sfml
 

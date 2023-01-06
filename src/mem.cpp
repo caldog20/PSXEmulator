@@ -1,7 +1,5 @@
 #include "mem.hpp"
 
-#include <exception>
-#include <iostream>
 #include <memory>
 
 #include "emulator.hpp"
@@ -27,23 +25,8 @@ void Memory::reset() {
 
 u32 Memory::read32(u32 address) {
     if (address % 4 != 0) m_emulator.log("Unaligned read32 at address {:#x}\n", address);
-    m_emulator.log("read32 {:#x}\n", address);
 
     u32 hw_address = address & 0x1fffffff;
-
-    if (MEMCONTROL.contains(hw_address)) {
-        m_emulator.log("MEMCONTROL Read at address: {:#x}, masked {:#x}\n", address, hw_address);
-        auto offset = MEMCONTROL.offset(hw_address);
-        u32 final = *(u32*)(m_hw.get() + offset);
-        return final;
-    }
-
-    if (HWREG.contains(hw_address)) {
-        m_emulator.log("read32 HWREG address: {:#x}, hw_address {:#x}\n", address, hw_address);
-        auto offset = HWREG.offset(hw_address);
-        u32 final = *(u32*)(m_hw.get() + offset);
-        return final;
-    }
 
     if (CACHECONTROL.contains(address)) {
         m_emulator.log("read32 CACHECONTROL address: {:#x}, hw_address {:#x}\n", address, hw_address);
@@ -72,6 +55,20 @@ u32 Memory::read32(u32 address) {
         return final;
     }
 
+    if (MEMCONTROL.contains(hw_address)) {
+        m_emulator.log("MEMCONTROL Read at address: {:#x}, masked {:#x}\n", address, hw_address);
+        auto offset = MEMCONTROL.offset(hw_address);
+        u32 final = *(u32*)(m_hw.get() + offset);
+        return final;
+    }
+
+    if (HWREG.contains(hw_address)) {
+        m_emulator.log("read32 HWREG address: {:#x}, hw_address {:#x}\n", address, hw_address);
+        auto offset = HWREG.offset(hw_address);
+        u32 final = *(u32*)(m_hw.get() + offset);
+        return final;
+    }
+
     if (PARAPORT.contains(hw_address)) {
         m_emulator.log("read32 Parallel address: {:#x}, hw_address {:#x}\n", address, hw_address);
         auto offset = PARAPORT.offset(hw_address);
@@ -93,20 +90,6 @@ void Memory::write32(u32 address, u32 value) {
         return;
     }
 
-    if (MEMCONTROL.contains(hw_address)) {
-        u32 offset = MEMCONTROL.offset(hw_address);
-        m_emulator.log("write32 MEMCONTROL address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
-        *(u32*)(m_hw.get() + offset) = value;
-        return;
-    }
-
-    if (HWREG.contains(hw_address)) {
-        auto offset = HWREG.offset(hw_address);
-        *(u32*)(m_hw.get() + offset) = value;
-        m_emulator.log("write32 HWREG address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
-        return;
-    }
-
     if (RAM.contains(hw_address)) {
         auto offset = RAM.offset(hw_address);
         *(u32*)(m_ram.get() + offset) = value;
@@ -118,6 +101,20 @@ void Memory::write32(u32 address, u32 value) {
         auto offset = SCRATCHPAD.offset(hw_address);
         *(u32*)(m_scratch.get() + offset) = value;
         m_emulator.log("write32 ScratchPad address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
+        return;
+    }
+
+    if (MEMCONTROL.contains(hw_address)) {
+        u32 offset = MEMCONTROL.offset(hw_address);
+        m_emulator.log("write32 MEMCONTROL address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
+        *(u32*)(m_hw.get() + offset) = value;
+        return;
+    }
+
+    if (HWREG.contains(hw_address)) {
+        auto offset = HWREG.offset(hw_address);
+        *(u32*)(m_hw.get() + offset) = value;
+        m_emulator.log("write32 HWREG address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
         return;
     }
 

@@ -75,6 +75,8 @@ struct Regs {
     u32 ld_target;
     u32 ld_value;
     u32 opcode;
+    u32 count;
+    u32 cycles;
 
     bool writeBack = false;
     void handlePendingLoad();

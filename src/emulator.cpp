@@ -10,7 +10,7 @@ void Emulator::step() {
 
 void Emulator::runFrame() {
     log("Frame {}\n", framesPassed++);
-    step();
+    m_cpu.step();
 }
 
 void Emulator::loadBios(const std::string& path) {
