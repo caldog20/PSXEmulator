@@ -38,11 +38,9 @@ void Cpu::step() {
     m_regs.cycles++;
 
     if (m_loadDelay && m_inLoadDelaySlot) {
-        if (m_instruction.rt == m_regs.ld_target) {
-            return;
+        if (m_instruction.rt != m_regs.ld_target) {
+            m_regs.set(m_regs.ld_target, m_regs.ld_value);
         }
-
-        m_regs.set(m_regs.ld_target, m_regs.ld_value);
         m_loadDelay = false;
         m_inLoadDelaySlot = false;
     }
