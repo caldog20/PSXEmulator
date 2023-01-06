@@ -28,7 +28,20 @@ void Cpu::fetch() {
     logMnemonic();
 }
 
+void Cpu::checkPendingLoad() {
+    pendingLoad += 1;
+    if (pendingLoad == 2) {
+        m_regs.set(m_regs.ld_target, m_regs.ld_value);
+        pendingLoad -= 1;
+        m_loadDelay = false;
+        m_inLoadDelaySlot = false;
+    }
+}
+
 void Cpu::step() {
+    if ((m_regs.pc >> 24) == 0x27) {
+        int a = 5;
+    }
     // Lookup instruction in basic LUT
     const auto bd = basic[m_instruction.opcode];
     // Execute the function pointed too by LUT pointer
@@ -43,6 +56,7 @@ void Cpu::step() {
         }
         m_loadDelay = false;
         m_inLoadDelaySlot = false;
+        pendingLoad = 0;
     }
 
     if (m_branchDelay && m_inBranchDelaySlot) {

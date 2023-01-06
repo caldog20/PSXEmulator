@@ -16,31 +16,37 @@ void Cpu::NOP() { log("NOP\n"); }
 void Cpu::LUI() { m_regs.set(m_instruction.rt, m_instruction.immlui); }
 
 void Cpu::LB() {
+    checkPendingLoad();
     m_regs.ld_target = m_instruction.rt;
     u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = (s8)m_emulator.m_mem.read8(addr);
+    m_regs.ld_value = static_cast<s8>(m_emulator.m_mem.read8(addr));
+    if (m_regs.ld_value == 0x43) {
+        int a = 5;
+    }
     m_loadDelay = true;
 }
 
 void Cpu::LBU() {
+    checkPendingLoad();
     m_regs.ld_target = m_instruction.rt;
     u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = (u32)m_emulator.m_mem.read8(addr);
+    m_regs.ld_value = m_emulator.m_mem.read8(addr);
     m_loadDelay = true;
 }
 
 void Cpu::LH() {
+    checkPendingLoad();
     m_regs.ld_target = m_instruction.rt;
     u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = (s16)m_emulator.m_mem.read16(addr);
+    m_regs.ld_value = static_cast<s16>(m_emulator.m_mem.read16(addr));
     m_loadDelay = true;
 }
 
 void Cpu::LW() {
+    checkPendingLoad();
     m_regs.ld_target = m_instruction.rt;
 
     u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-
     m_regs.ld_value = m_emulator.m_mem.read32(addr);
     m_loadDelay = true;
 }
@@ -125,6 +131,13 @@ void Cpu::SLL() {
     if (!m_instruction.rd) return;
 
     m_regs.set(m_instruction.rd, m_regs.get(m_instruction.rt) << m_instruction.sa);
+}
+
+void Cpu::SRA() {
+    if (!m_instruction.rd) return;
+    s32 rt = m_regs.get(m_instruction.rt);
+    u32 value = rt >> m_instruction.sa;
+    m_regs.set(m_instruction.rd, value);
 }
 
 void Cpu::AND() {
@@ -303,7 +316,6 @@ void Cpu::RFE() { panic("[Unimplemented] RFE instruction\n"); }
 void Cpu::SLLV() { panic("[Unimplemented] SLLV instruction\n"); }
 void Cpu::SLT() { panic("[Unimplemented] SLT instruction\n"); }
 void Cpu::SLTIU() { panic("[Unimplemented] SLTIU instruction\n"); }
-void Cpu::SRA() { panic("[Unimplemented] SRA instruction\n"); }
 void Cpu::SRAV() { panic("[Unimplemented] SRAV instruction\n"); }
 void Cpu::SRL() { panic("[Unimplemented] SRL instruction\n"); }
 void Cpu::SRLV() { panic("[Unimplemented] SRLV instruction\n"); }

@@ -130,6 +130,7 @@ class Cpu {
     void logMnemonic();
     void fetch();
     void reset();
+    void checkPendingLoad();
 
     Emulator& m_emulator;
     Regs m_regs;
@@ -137,6 +138,7 @@ class Cpu {
     bool m_inLoadDelaySlot = false;
     bool m_branchDelay = false;
     bool m_inBranchDelaySlot = false;
+    u32 pendingLoad = 0;
 
     struct instruction {
         u32 ins;
