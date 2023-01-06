@@ -31,7 +31,7 @@ class Emulator {
     }
 
     inline void checktoBreak() {
-        if (m_break && m_cpu.m_regs.pc == m_breakPc)  {
+        if (m_break && m_cpu.m_regs.pc == m_breakPc) {
             isRunning = false;
         }
     }

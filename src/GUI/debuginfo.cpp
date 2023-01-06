@@ -1,8 +1,9 @@
 #include "debuginfo.hpp"
 
+#include <string>
+
 #include "imgui.h"
 #include "mnemonics.hpp"
-#include <string>
 
 void DebugInfo::draw() {
     auto& curIns = m_emulator.m_cpu.m_instruction;

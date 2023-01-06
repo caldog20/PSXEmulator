@@ -112,6 +112,8 @@ struct Regs {
 #define RD(instruction) ((instruction >> 11) & 0x1F)
 #define IMMSE(instruction) (s16(instruction))
 #define IMMLUI(instruction) (instruction << 16)
+#define BGEZ(instruction) ((instruction >> 16) & 1)
+#define B_LINK(instruction) ((instruction >> 20) & 1)
 // #define BT(pc) ((s16)IM * 4 + pc)
 #define START_PC (0xbfc00000)
 
@@ -128,8 +130,6 @@ class Cpu {
     void logMnemonic();
     void fetch();
     void reset();
-
-
 
     Emulator& m_emulator;
     Regs m_regs;
@@ -151,6 +151,8 @@ class Cpu {
         u32 im;
         u32 immse;
         u32 immlui;
+        u32 bgez;
+        u32 b_link;
 
         instruction(u32 instruction) : ins(instruction) {
             opcode = OPCODE(instruction);
@@ -164,6 +166,8 @@ class Cpu {
             im = IM(instruction);
             immse = IMMSE(instruction);
             immlui = IMMLUI(instruction);
+            bgez = BGEZ(instruction);
+            b_link = B_LINK(instruction);
         }
 
         void set(u32 instruction) {
@@ -179,12 +183,15 @@ class Cpu {
             im = IM(instruction);
             immse = IMMSE(instruction);
             immlui = IMMLUI(instruction);
+            bgez = BGEZ(instruction);
+            b_link = B_LINK(instruction);
         }
     };
 
     instruction m_instruction{0};
 
   private:
+    void Branch(bool link = false);
     void Unknown();
     void Special();
     void REGIMM();

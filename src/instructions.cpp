@@ -18,7 +18,14 @@ void Cpu::LUI() { m_regs.set(m_instruction.rt, m_instruction.immlui); }
 void Cpu::LB() {
     m_regs.ld_target = m_instruction.rt;
     u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = (s8) m_emulator.m_mem.read8(addr);
+    m_regs.ld_value = (s8)m_emulator.m_mem.read8(addr);
+    m_loadDelay = true;
+}
+
+void Cpu::LBU() {
+    m_regs.ld_target = m_instruction.rt;
+    u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
+    m_regs.ld_value = (u32)m_emulator.m_mem.read8(addr);
     m_loadDelay = true;
 }
 
@@ -30,7 +37,6 @@ void Cpu::LH() {
 }
 
 void Cpu::LW() {
-
     m_regs.ld_target = m_instruction.rt;
 
     u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
@@ -41,6 +47,7 @@ void Cpu::LW() {
 
 void Cpu::SB() {
     if ((m_regs.copr.sr & 0x10000) != 0) {
+        m_emulator.log("Cache Isolated, ignoring write\n");
         return;
     }
 
@@ -50,6 +57,11 @@ void Cpu::SB() {
 }
 
 void Cpu::SH() {
+    if ((m_regs.copr.sr & 0x10000) != 0) {
+        m_emulator.log("Cache Isolated, ignoring write\n");
+        return;
+    }
+
     u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
     u16 value = (u16)m_regs.get(m_instruction.rt);
     m_emulator.m_mem.write16(address, value);
@@ -57,12 +69,12 @@ void Cpu::SH() {
 
 void Cpu::SW() {
     if ((m_regs.copr.sr & 0x10000) != 0) {
+        m_emulator.log("Cache Isolated, ignoring write\n");
         return;
     }
 
     u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
     u32 value = m_regs.get(m_instruction.rt);
-
     m_emulator.m_mem.write32(address, value);
 }
 
@@ -92,6 +104,13 @@ void Cpu::ADDU() {
     m_regs.set(m_instruction.rd, value);
 }
 
+void Cpu::SUBU() {
+    if (!m_instruction.rd) return;
+
+    u32 value = m_regs.get(m_instruction.rs) - m_regs.get(m_instruction.rt);
+    m_regs.set(m_instruction.rd, value);
+}
+
 void Cpu::OR() {
     u32 value = m_regs.get(m_instruction.rs) | m_regs.get(m_instruction.rt);
     m_regs.set(m_instruction.rd, value);
@@ -118,7 +137,6 @@ void Cpu::ANDI() {
     m_regs.set(m_instruction.rt, value);
 }
 
-
 // CONDITONAL/BRANCH
 
 void Cpu::J() {
@@ -137,24 +155,54 @@ void Cpu::JR() {
     m_regs.jumppc = m_regs.get(m_instruction.rs);
 }
 
+void Cpu::JALR() {
+    m_branchDelay = true;
+    m_regs.jumppc = m_regs.get(m_instruction.rs);
+    m_regs.set(m_instruction.rd, m_regs.pc + 8);
+}
+
 void Cpu::BEQ() {
     u32 rs = m_regs.get(m_instruction.rs);
     u32 rt = m_regs.get(m_instruction.rt);
 
-    if (rs != rt) return;
-
-    m_branchDelay = true;
-    m_regs.jumppc = m_instruction.immse * 4 + m_regs.pc + 4;
+    if (rs == rt) {
+        m_branchDelay = true;
+        m_regs.jumppc = m_instruction.immse * 4 + m_regs.pc + 4;
+    }
 }
 
 void Cpu::BNE() {
     u32 rs = m_regs.get(m_instruction.rs);
     u32 rt = m_regs.get(m_instruction.rt);
 
-    if (rs == rt) return;
+    if (rs != rt) {
+        m_branchDelay = true;
+        m_regs.jumppc = m_instruction.immse * 4 + m_regs.pc + 4;
+    }
+}
 
+void Cpu::BGTZ() {
+    s32 rs = m_regs.get(m_instruction.rs);
+    if (rs > 0) {
+        m_branchDelay = true;
+        m_regs.jumppc = m_instruction.immse * 4 + m_regs.pc + 4;
+    }
+}
+
+void Cpu::BLEZ() {
+    s32 rs = m_regs.get(m_instruction.rs);
+    if (rs <= 0) {
+        m_branchDelay = true;
+        m_regs.jumppc = m_instruction.immse * 4 + m_regs.pc + 4;
+    }
+}
+
+void Cpu::Branch(bool link) {
     m_branchDelay = true;
     m_regs.jumppc = m_instruction.immse * 4 + m_regs.pc + 4;
+    if (link) {
+        m_regs.set(31, m_regs.pc + 8);
+    }
 }
 
 void Cpu::SLTU() {
@@ -163,6 +211,28 @@ void Cpu::SLTU() {
     u32 value = m_regs.get(m_instruction.rs) < m_regs.get(m_instruction.rt);
 
     m_regs.set(m_instruction.rd, value);
+}
+
+void Cpu::SLTI() {
+    if (!m_instruction.rt) return;
+
+    s32 rs = m_regs.get(m_instruction.rs);
+    s32 imm = m_instruction.immse;
+    u32 value = rs < imm;
+    m_regs.set(m_instruction.rt, value);
+}
+
+void Cpu::REGIMM() {
+    s32 rs = m_regs.get(m_instruction.rs);
+    if (m_instruction.bgez) {
+        if (rs >= 0) {
+            Branch(m_instruction.b_link);
+        }
+    } else {
+        if (rs < 0) {
+            Branch(m_instruction.b_link);
+        }
+    }
 }
 
 // COP
@@ -209,17 +279,13 @@ void Cpu::MFC0() {
 // Unimplemented Instructions
 
 void Cpu::Unknown() { panic("Unknown instruction"); }
-void Cpu::REGIMM() { panic("[Unimplemented] RegImm instruction\n"); }
-void Cpu::BGTZ() { panic("[Unimplemented] BGTZ instruction\n"); }
-void Cpu::BLEZ() { panic("[Unimplemented] BLEZ instruction\n"); }
+
 void Cpu::BREAK() { panic("[Unimplemented] BREAK instruction\n"); }
 void Cpu::CFC2() { panic("[Unimplemented] CFC2 instruction\n"); }
 void Cpu::COP2() { panic("[Unimplemented] COP2 instruction\n"); }
 void Cpu::CTC2() { panic("[Unimplemented] CTC2 instruction\n"); }
 void Cpu::DIV() { panic("[Unimplemented] DIV instruction\n"); }
 void Cpu::DIVU() { panic("[Unimplemented] DIVU instruction\n"); }
-void Cpu::JALR() { panic("[Unimplemented] JALR instruction\n"); }
-void Cpu::LBU() { panic("[Unimplemented] LBU instruction\n"); }
 void Cpu::LHU() { panic("[Unimplemented] LHU instruction\n"); }
 void Cpu::LWC2() { panic("[Unimplemented] LWC2 instruction\n"); }
 void Cpu::LWL() { panic("[Unimplemented] LWL instruction\n"); }
@@ -236,14 +302,12 @@ void Cpu::NOR() { panic("[Unimplemented] NOR instruction\n"); }
 void Cpu::RFE() { panic("[Unimplemented] RFE instruction\n"); }
 void Cpu::SLLV() { panic("[Unimplemented] SLLV instruction\n"); }
 void Cpu::SLT() { panic("[Unimplemented] SLT instruction\n"); }
-void Cpu::SLTI() { panic("[Unimplemented] SLTI instruction\n"); }
 void Cpu::SLTIU() { panic("[Unimplemented] SLTIU instruction\n"); }
 void Cpu::SRA() { panic("[Unimplemented] SRA instruction\n"); }
 void Cpu::SRAV() { panic("[Unimplemented] SRAV instruction\n"); }
 void Cpu::SRL() { panic("[Unimplemented] SRL instruction\n"); }
 void Cpu::SRLV() { panic("[Unimplemented] SRLV instruction\n"); }
 void Cpu::SUB() { panic("[Unimplemented] SUB instruction\n"); }
-void Cpu::SUBU() { panic("[Unimplemented] SUBU instruction\n"); }
 void Cpu::SWC2() { panic("[Unimplemented] SWC2 instruction\n"); }
 void Cpu::SWL() { panic("[Unimplemented] SWL instruction\n"); }
 void Cpu::SWR() { panic("[Unimplemented] SWR instruction\n"); }
