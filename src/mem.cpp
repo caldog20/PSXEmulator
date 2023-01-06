@@ -24,7 +24,10 @@ void Memory::reset() {
 }
 
 u32 Memory::read32(u32 address) {
-    if (address % 4 != 0) m_emulator.log("Unaligned read32 at address {:#x}\n", address);
+    if (address % 4 != 0) {
+        m_emulator.log("Unaligned read32 at address {:#x}\n", address);
+        return 0;
+    }
 
     u32 hw_address = address & 0x1fffffff;
 
@@ -80,7 +83,66 @@ u32 Memory::read32(u32 address) {
     return 0;
 }
 
+void Memory::write16(u32 address, u16 value) {
+    if (address % 2 != 0) {
+        m_emulator.log("Unaligned write16 at address {:#x}\n", address);
+        return;
+    }
+
+    u32 hw_address = address & 0x1fffffff;
+
+    if (CACHECONTROL.contains(address)) {
+        m_emulator.log("write16 CACHECONTROL address: {:#x}, hw_address {:#x}, value: {:#x}\n", address, hw_address,
+                       value);
+        m_cacheControl = value;
+        return;
+    }
+
+    if (RAM.contains(hw_address)) {
+        auto offset = RAM.offset(hw_address);
+        *(u16*)(m_ram.get() + offset) = value;
+        m_emulator.log("write16 RAM address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
+        return;
+    }
+
+    if (SCRATCHPAD.contains(hw_address)) {
+        auto offset = SCRATCHPAD.offset(hw_address);
+        *(u16*)(m_scratch.get() + offset) = value;
+        m_emulator.log("write16 ScratchPad address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
+        return;
+    }
+
+    if (MEMCONTROL.contains(hw_address)) {
+        u32 offset = MEMCONTROL.offset(hw_address);
+        m_emulator.log("write16 MEMCONTROL address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
+        *(u16*)(m_hw.get() + offset) = value;
+        return;
+    }
+
+    if (HWREG.contains(hw_address)) {
+        auto offset = HWREG.offset(hw_address);
+        *(u16*)(m_hw.get() + offset) = value;
+        m_emulator.log("write16 HWREG address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
+        return;
+    }
+
+    if (PARAPORT.contains(hw_address)) {
+        auto offset = PARAPORT.offset(hw_address);
+        *(u16*)(m_para.get() + offset) = value;
+        m_emulator.log("write16 Parallel address: {:#x}, offset: {:#x}, value: {:#x}\n", hw_address, offset, value);
+        return;
+    }
+
+    m_emulator.log("write16: Unmatched memory region at address {:#x}, hw_address {:#x}, value: {:#x}\n", address,
+                   hw_address, value);
+}
+
 void Memory::write32(u32 address, u32 value) {
+    if (address % 4 != 0) {
+        m_emulator.log("Unaligned write32 at address {:#x}\n", address);
+        return;
+    }
+
     u32 hw_address = address & 0x1fffffff;
 
     if (CACHECONTROL.contains(address)) {
