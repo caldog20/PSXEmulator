@@ -49,9 +49,14 @@ void Cpu::step() {
         m_regs.pc = m_regs.jumppc;
         m_regs.next_pc = m_regs.jumppc + 4;
         m_regs.jumppc = 0;
+        if (m_regs.linkpc) {
+            m_regs.gpr.ra = m_regs.linkpc;
+            m_regs.linkpc = 0;
+        }
         m_branchDelay = false;
         m_inBranchDelaySlot = false;
         fetch();
+        m_emulator.checktoBreak();
         return;
     }
 
@@ -65,6 +70,7 @@ void Cpu::step() {
 
     m_regs.nextpc();
     fetch();
+    m_emulator.checktoBreak();
 }
 
 void Cpu::logMnemonic() {

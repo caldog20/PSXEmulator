@@ -22,7 +22,7 @@ void RegViewer::draw() {
         for (int i = 0; i < 32; i++) {
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::TextUnformatted(std::to_string(i).c_str());
+            ImGui::TextUnformatted(regs_gpr[i]);
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("0x%08x", m_emulator.m_cpu.m_regs.gpr.r[i]);
         }

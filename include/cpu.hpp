@@ -72,6 +72,7 @@ struct Regs {
     u32 pc;
     u32 jumppc;
     u32 next_pc;
+    u32 linkpc;
     u32 ld_target;
     u32 ld_value;
     u32 opcode;
@@ -127,6 +128,8 @@ class Cpu {
     void logMnemonic();
     void fetch();
     void reset();
+
+
 
     Emulator& m_emulator;
     Regs m_regs;

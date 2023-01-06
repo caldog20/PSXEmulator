@@ -73,6 +73,6 @@ class Memory {
     const Range<u32> HWREG = Range<u32>(HWREG_BASE, HWREG_SIZE);
     const Range<u32> MEMCONTROL = Range<u32>(0x1f801000, MEMCONTROL_SIZE);
     const Range<u32> CACHECONTROL = Range<u32>(0xFFFE0130, CACHECONTROL_SIZE);
-
+    const Range<u32> EXP1 = Range<u32>(0x1f000084, 4);
     Emulator& m_emulator;
 };

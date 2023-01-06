@@ -24,14 +24,23 @@ class Emulator {
 
     template <typename... Args>
     void log(const char* fmt, const Args&... args) {
-        Helpers::log(fmt, args...);
         if (m_enableLog) {
+            Helpers::log(fmt, args...);
             m_logger.AddLog(fmt, args...);
+        }
+    }
+
+    inline void checktoBreak() {
+        if (m_break && m_cpu.m_regs.pc == m_breakPc)  {
+            isRunning = false;
         }
     }
 
     bool isRunning = false;
     int framesPassed = 0;
+    u32 m_breakPc = 0xbfc00000;
+    bool m_break = false;
+
     std::array<u8, width * height * 4> framebuffer;  // An 160x144 RGBA framebuffer
 
     Emulator() { framebuffer.fill(0xFF); }

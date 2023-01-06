@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "mnemonics.hpp"
+#include <string>
 
 void DebugInfo::draw() {
     auto& curIns = m_emulator.m_cpu.m_instruction;
@@ -19,7 +20,10 @@ void DebugInfo::draw() {
     ImGui::SameLine();
     if (ImGui::Button("Stop")) m_emulator.isRunning = false;
     ImGui::SameLine();
-    if (ImGui::Button("Reset")) m_emulator.reset();
+    if (ImGui::Button("Reset")) {
+        m_emulator.reset();
+        m_emulator.m_cpu.fetch();
+    }
 
     ImGui::Text("Current PC: 0x%08x", m_emulator.m_cpu.m_regs.pc);
     ImGui::Text("Current Instruction: 0x%08x", curIns.ins);
@@ -28,6 +32,15 @@ void DebugInfo::draw() {
     //    ImGui::Text("Instruction Counter %lu", m_emulator.m_cpu->m_counter);
     //    ImGui::Text("Branch Delay Instruction %lu", m_emulator.m_cpu->m_bdCounter);
     //    ImGui::Text("Load Delay Instruction %lu", m_emulator.m_cpu->m_ldCounter);
+    static char break_addr[9] = "";
+    ImGui::InputText("Break Address", break_addr, sizeof(break_addr), ImGuiInputTextFlags_CharsHexadecimal);
+    if (ImGui::Button("Set Break")) {
+        u32 address = std::stoul(break_addr, nullptr, 16);
+        m_emulator.m_breakPc = address;
+        m_emulator.m_break = true;
+    }
+
+    ImGui::Checkbox("Break at address", &m_emulator.m_break);
 
     ImGui::NewLine();
     ImGui::Separator();
