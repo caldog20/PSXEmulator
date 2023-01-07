@@ -61,8 +61,8 @@ void Cpu::LB() {
 void Cpu::LBU() {
     checkPendingLoad();
     m_regs.ld_target = m_instruction.rt;
-    u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = m_emulator.m_mem.read8(addr);
+    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
+    m_regs.ld_value = m_emulator.m_mem.read8(address);
     m_loadDelay = true;
 }
 
@@ -76,6 +76,18 @@ void Cpu::LH() {
     m_regs.ld_target = m_instruction.rt;
 
     m_regs.ld_value = static_cast<s16>(m_emulator.m_mem.read16(address));
+    m_loadDelay = true;
+}
+
+void Cpu::LHU() {
+    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
+    if (address % 2 != 0) {
+        ExceptionHandler(Exception::BadLoadAddress);
+        return;
+    }
+    checkPendingLoad();
+    m_regs.ld_target = m_instruction.rt;
+    m_regs.ld_value = m_emulator.m_mem.read16(address);
     m_loadDelay = true;
 }
 
@@ -442,7 +454,6 @@ void Cpu::BREAK() { panic("[Unimplemented] BREAK instruction\n"); }
 void Cpu::CFC2() { panic("[Unimplemented] CFC2 instruction\n"); }
 void Cpu::COP2() { panic("[Unimplemented] COP2 instruction\n"); }
 void Cpu::CTC2() { panic("[Unimplemented] CTC2 instruction\n"); }
-void Cpu::LHU() { panic("[Unimplemented] LHU instruction\n"); }
 void Cpu::LWC2() { panic("[Unimplemented] LWC2 instruction\n"); }
 void Cpu::LWL() { panic("[Unimplemented] LWL instruction\n"); }
 void Cpu::LWR() { panic("[Unimplemented] LWR instruction\n"); }
