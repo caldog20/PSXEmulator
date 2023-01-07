@@ -5,6 +5,7 @@
 #pragma once
 #include <map>
 
+#include "exceptions.hpp"
 #include "utils.hpp"
 
 class Emulator;
@@ -196,6 +197,7 @@ class Cpu {
     instruction m_instruction{0};
 
   private:
+    void ExceptionHandler(Exception cause);
     void Branch(bool link = false);
     void Unknown();
     void Special();

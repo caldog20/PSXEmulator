@@ -4,10 +4,30 @@
 using Helpers::log;
 using Helpers::panic;
 
+void Cpu::ExceptionHandler(Exception cause) {
+    u32 sr = m_regs.copr.sr;
+    std::bitset<32> b_sr{sr};
+
+    u32 handler_address = (b_sr[22]) ? 0xbfc00180 : 0x80000080;
+
+    u32 mode = sr & 0x3f;
+    sr &= ~0x3f;
+    sr |= (mode << 2) & 0x3f;
+    m_regs.copr.sr = sr;
+
+    m_regs.copr.cause = static_cast<u32>(cause) << 2;
+    m_regs.copr.epc = m_regs.pc;
+
+    m_regs.pc = handler_address;
+    m_branching = true;
+}
+
 void Cpu::Special() {
     const auto f = special[m_instruction.fn];
     (this->*f)();
 }
+
+void Cpu::SYSCALL() { ExceptionHandler(Exception::SYSCALL); }
 
 void Cpu::NOP() { log("NOP\n"); }
 
@@ -208,6 +228,10 @@ void Cpu::MFHI() {
     m_regs.set(m_instruction.rd, m_regs.spr.hi);
 }
 
+void Cpu::MTLO() { m_regs.spr.lo = m_regs.get(m_instruction.rs); }
+
+void Cpu::MTHI() { m_regs.spr.hi = m_regs.get(m_instruction.rs); }
+
 // CONDITONAL/BRANCH
 
 void Cpu::J() {
@@ -379,8 +403,6 @@ void Cpu::LWL() { panic("[Unimplemented] LWL instruction\n"); }
 void Cpu::LWR() { panic("[Unimplemented] LWR instruction\n"); }
 void Cpu::MFC2() { panic("[Unimplemented] MFC2 instruction\n"); }
 void Cpu::MTC2() { panic("[Unimplemented] MTC2 instruction\n"); }
-void Cpu::MTHI() { panic("[Unimplemented] MTHI instruction\n"); }
-void Cpu::MTLO() { panic("[Unimplemented] MTLO instruction\n"); }
 void Cpu::MULT() { panic("[Unimplemented] MULT instruction\n"); }
 void Cpu::MULTU() { panic("[Unimplemented] MULTU instruction\n"); }
 void Cpu::NOR() { panic("[Unimplemented] NOR instruction\n"); }
@@ -392,6 +414,6 @@ void Cpu::SUB() { panic("[Unimplemented] SUB instruction\n"); }
 void Cpu::SWC2() { panic("[Unimplemented] SWC2 instruction\n"); }
 void Cpu::SWL() { panic("[Unimplemented] SWL instruction\n"); }
 void Cpu::SWR() { panic("[Unimplemented] SWR instruction\n"); }
-void Cpu::SYSCALL() { panic("[Unimplemented] SYSCALL instruction\n"); }
+
 void Cpu::XOR() { panic("[Unimplemented] XOR instruction\n"); }
 void Cpu::XORI() { panic("[Unimplemented] XORI instruction\n"); }

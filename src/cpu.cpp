@@ -4,6 +4,7 @@
 
 #include "cpu.hpp"
 
+#include <bitset>
 #include <memory>
 
 #include "emulator.hpp"
