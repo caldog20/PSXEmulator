@@ -215,6 +215,15 @@ void Cpu::ORI() {
     m_regs.set(m_instruction.rt, value);
 }
 
+void Cpu::NOR() {
+    if (!m_instruction.rd) return;
+    u32 rs = m_regs.get(m_instruction.rs);
+    u32 rt = m_regs.get(m_instruction.rt);
+
+    u32 value = !(rs | rt);
+    m_regs.set(m_instruction.rd, value);
+}
+
 void Cpu::SLL() {
     if (!m_instruction.rd) return;
 
@@ -469,7 +478,7 @@ void Cpu::MFC2() { panic("[Unimplemented] MFC2 instruction\n"); }
 void Cpu::MTC2() { panic("[Unimplemented] MTC2 instruction\n"); }
 void Cpu::MULT() { panic("[Unimplemented] MULT instruction\n"); }
 void Cpu::MULTU() { panic("[Unimplemented] MULTU instruction\n"); }
-void Cpu::NOR() { panic("[Unimplemented] NOR instruction\n"); }
+
 void Cpu::SRAV() { panic("[Unimplemented] SRAV instruction\n"); }
 void Cpu::SRLV() { panic("[Unimplemented] SRLV instruction\n"); }
 void Cpu::SUB() { panic("[Unimplemented] SUB instruction\n"); }
