@@ -131,6 +131,8 @@ class Cpu {
     void fetch();
     void reset();
     void checkPendingLoad();
+    void handleLoadDelay();
+    void handleBranchDelay();
 
     Emulator& m_emulator;
     Regs m_regs;
@@ -138,6 +140,7 @@ class Cpu {
     bool m_inLoadDelaySlot = false;
     bool m_branchDelay = false;
     bool m_inBranchDelaySlot = false;
+    bool m_branching = false;
     u32 pendingLoad = 0;
 
     struct instruction {

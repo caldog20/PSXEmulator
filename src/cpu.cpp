@@ -38,18 +38,7 @@ void Cpu::checkPendingLoad() {
     }
 }
 
-void Cpu::step() {
-    if ((m_regs.pc >> 24) == 0x27) {
-        int a = 5;
-    }
-    // Lookup instruction in basic LUT
-    const auto bd = basic[m_instruction.opcode];
-    // Execute the function pointed too by LUT pointer
-    (this->*bd)();
-
-    m_regs.count++;
-    m_regs.cycles++;
-
+void Cpu::handleLoadDelay() {
     if (m_loadDelay && m_inLoadDelaySlot) {
         if (m_instruction.rt != m_regs.ld_target) {
             m_regs.set(m_regs.ld_target, m_regs.ld_value);
@@ -59,6 +48,12 @@ void Cpu::step() {
         pendingLoad = 0;
     }
 
+    if (m_loadDelay) {
+        m_inLoadDelaySlot = true;
+    }
+}
+
+void Cpu::handleBranchDelay() {
     if (m_branchDelay && m_inBranchDelaySlot) {
         m_regs.pc = m_regs.jumppc;
         m_regs.next_pc = m_regs.jumppc + 4;
@@ -67,22 +62,34 @@ void Cpu::step() {
             m_regs.gpr.ra = m_regs.linkpc;
             m_regs.linkpc = 0;
         }
+        if (m_loadDelay) {
+            m_inLoadDelaySlot = true;
+        }
         m_branchDelay = false;
         m_inBranchDelaySlot = false;
-        fetch();
-        m_emulator.checktoBreak();
-        return;
+        m_branching = true;
     }
 
     if (m_branchDelay) {
         m_inBranchDelaySlot = true;
     }
+}
 
-    if (m_loadDelay) {
-        m_inLoadDelaySlot = true;
-    }
+void Cpu::step() {
+    m_branching = false;
+    // Lookup instruction in basic LUT
+    const auto bd = basic[m_instruction.opcode];
+    // Execute the function pointed too by LUT pointer
+    (this->*bd)();
 
-    m_regs.nextpc();
+    m_regs.count++;
+    m_regs.cycles++;
+
+    handleLoadDelay();
+    handleBranchDelay();
+
+    if (!m_branching) m_regs.nextpc();
+
     fetch();
     m_emulator.checktoBreak();
 }

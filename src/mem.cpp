@@ -33,7 +33,7 @@ u8 Memory::read8(u32 address) {
 
     if (CACHECONTROL.contains(address)) {
         m_emulator.log("read8 CACHECONTROL address: {:#x}, hw_address {:#x}\n", address, hw_address);
-        u8 final = (u8)m_cacheControl;
+        u8 final = m_cacheControl;
         return final;
     }
 
@@ -47,35 +47,35 @@ u8 Memory::read8(u32 address) {
     if (RAM.contains(hw_address)) {
         m_emulator.log("read8 RAM address: {:#x}, hw_address {:#x}\n", address, hw_address);
         auto offset = RAM.offset(hw_address);
-        u8 final = m_ram[offset];
+        u8 final = *(u8*)(m_ram.get() + offset);
         return final;
     }
 
     if (SCRATCHPAD.contains(hw_address)) {
         m_emulator.log("read8 ScratchPad address: {:#x}, hw_address {:#x}\n", address, hw_address);
         auto offset = SCRATCHPAD.offset(hw_address);
-        u8 final = m_scratch[offset];
+        u8 final = *(u8*)(m_scratch.get() + offset);
         return final;
     }
 
     if (MEMCONTROL.contains(hw_address)) {
         m_emulator.log("MEMCONTROL Read at address: {:#x}, masked {:#x}\n", address, hw_address);
         auto offset = MEMCONTROL.offset(hw_address);
-        u8 final = m_hw[offset];
+        u8 final = *(u8*)(m_hw.get() + offset);
         return final;
     }
 
     if (HWREG.contains(hw_address)) {
         m_emulator.log("read8 HWREG address: {:#x}, hw_address {:#x}\n", address, hw_address);
         auto offset = HWREG.offset(hw_address);
-        u8 final = m_hw[offset];
+        u8 final = *(u8*)(m_hw.get() + offset);
         return final;
     }
 
     if (PARAPORT.contains(hw_address)) {
         m_emulator.log("read8 Parallel address: {:#x}, hw_address {:#x}\n", address, hw_address);
         auto offset = PARAPORT.offset(hw_address);
-        u8 final = m_para[offset];
+        u8 final = *(u8*)(m_para.get() + offset);
         return final;
     }
 
