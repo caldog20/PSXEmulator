@@ -402,6 +402,14 @@ void Cpu::SLT() {
     m_regs.set(m_instruction.rd, static_cast<u32>(value));
 }
 
+void Cpu::SLLV() {
+    if (!m_instruction.rd) return;
+    u32 rs = m_regs.get(m_instruction.rs);
+    u32 rt = m_regs.get(m_instruction.rt);
+    u32 value = rt << (rs & 0x1f);
+    m_regs.set(m_instruction.rd, value);
+}
+
 void Cpu::REGIMM() {
     s32 rs = m_regs.get(m_instruction.rs);
     if (m_instruction.bgez) {
@@ -462,7 +470,6 @@ void Cpu::MTC2() { panic("[Unimplemented] MTC2 instruction\n"); }
 void Cpu::MULT() { panic("[Unimplemented] MULT instruction\n"); }
 void Cpu::MULTU() { panic("[Unimplemented] MULTU instruction\n"); }
 void Cpu::NOR() { panic("[Unimplemented] NOR instruction\n"); }
-void Cpu::SLLV() { panic("[Unimplemented] SLLV instruction\n"); }
 void Cpu::SRAV() { panic("[Unimplemented] SRAV instruction\n"); }
 void Cpu::SRLV() { panic("[Unimplemented] SRLV instruction\n"); }
 void Cpu::SUB() { panic("[Unimplemented] SUB instruction\n"); }
