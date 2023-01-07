@@ -22,8 +22,8 @@ typedef union {
 
 typedef union {
     struct {
-        u32 hi;
         u32 lo;
+        u32 hi;
     };
     u32 r[2];
 } spr_t;
@@ -74,6 +74,7 @@ struct Regs {
     u32 jumppc;
     u32 next_pc;
     u32 linkpc;
+    u32 backup_pc;
     u32 ld_target;
     u32 ld_value;
     u32 opcode;

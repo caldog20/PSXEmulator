@@ -5,7 +5,7 @@
 #include "fmt/format.h"       // For fmt::print
 #include "tinyfiledialogs.h"  // For file explorer
 
-#define REFRESH_COUNT 50000
+#define REFRESH_COUNT 100000
 
 GUI::GUI(Emulator& emulator) : window(sf::VideoMode(1366, 768), "PSX Emulator"), emulator(emulator) {
     window.setFramerateLimit(60);  // cap FPS to 60
@@ -28,7 +28,7 @@ void GUI::update() {
         if (event.type == sf::Event::Closed) window.close();
     }
 
-    while (emulator.isRunning && emulator.m_cpu.m_regs.cycles < REFRESH_COUNT) {
+    while (emulator.isRunning && (emulator.m_cpu.m_regs.cycles < REFRESH_COUNT)) {
         emulator.runFrame();
     }
     emulator.m_cpu.m_regs.cycles = 0;

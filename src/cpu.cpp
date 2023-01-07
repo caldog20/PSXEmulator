@@ -26,7 +26,7 @@ void Cpu::fetch() {
     m_regs.gpr.zero = 0;
     m_instruction.set(m_emulator.m_mem.read32(m_regs.pc));
     m_emulator.log("Current PC: {:#x} Instruction: {:#x}\n", m_regs.pc, m_instruction.ins);
-    logMnemonic();
+    //    logMnemonic();
 }
 
 void Cpu::checkPendingLoad() {
@@ -78,6 +78,14 @@ void Cpu::handleBranchDelay() {
 
 void Cpu::step() {
     m_branching = false;
+    m_regs.backup_pc = m_regs.pc;
+
+    if ((m_regs.pc % 4) != 0) {
+        m_emulator.log("Unaligned PC {:#x}", m_regs.pc);
+        ExceptionHandler(BadLoadAddress);
+        return;
+    }
+
     // Lookup instruction in basic LUT
     const auto bd = basic[m_instruction.opcode];
     // Execute the function pointed too by LUT pointer

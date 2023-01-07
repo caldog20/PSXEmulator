@@ -2,5 +2,8 @@
 #include <cstddef>
 
 enum Exception : size_t {
-    SYSCALL = 0x8,
+    Syscall = 0x8,
+    Overflow = 0xC,
+    BadLoadAddress = 0x4,
+    BadStoreAddress = 0x5,
 };

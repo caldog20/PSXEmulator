@@ -16,10 +16,25 @@ void Cpu::ExceptionHandler(Exception cause) {
     m_regs.copr.sr = sr;
 
     m_regs.copr.cause = static_cast<u32>(cause) << 2;
-    m_regs.copr.epc = m_regs.pc;
+    m_regs.copr.epc = m_regs.backup_pc;
+
+    if (m_inBranchDelaySlot) {
+        m_regs.copr.epc -= 4;
+        m_regs.copr.cause |= 1 << 31;
+    }
 
     m_regs.pc = handler_address;
     m_branching = true;
+}
+
+void Cpu::RFE() {
+    if ((m_instruction.ins & 0x3f) != 0x10) {
+        m_emulator.log("RFE: Unmatched cop0 instruction\n");
+        return;
+    }
+    u32 mode = m_regs.copr.sr & 0x3f;
+    m_regs.copr.sr &= ~0x3f;
+    m_regs.copr.sr |= mode >> 2;
 }
 
 void Cpu::Special() {
@@ -27,7 +42,7 @@ void Cpu::Special() {
     (this->*f)();
 }
 
-void Cpu::SYSCALL() { ExceptionHandler(Exception::SYSCALL); }
+void Cpu::SYSCALL() { ExceptionHandler(Exception::Syscall); }
 
 void Cpu::NOP() { log("NOP\n"); }
 
@@ -52,19 +67,28 @@ void Cpu::LBU() {
 }
 
 void Cpu::LH() {
+    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
+    if (address % 2 != 0) {
+        ExceptionHandler(Exception::BadLoadAddress);
+        return;
+    }
     checkPendingLoad();
     m_regs.ld_target = m_instruction.rt;
-    u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = static_cast<s16>(m_emulator.m_mem.read16(addr));
+
+    m_regs.ld_value = static_cast<s16>(m_emulator.m_mem.read16(address));
     m_loadDelay = true;
 }
 
 void Cpu::LW() {
+    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
+    if (address % 4 != 0) {
+        ExceptionHandler(Exception::BadLoadAddress);
+        return;
+    }
     checkPendingLoad();
     m_regs.ld_target = m_instruction.rt;
 
-    u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = m_emulator.m_mem.read32(addr);
+    m_regs.ld_value = m_emulator.m_mem.read32(address);
     m_loadDelay = true;
 }
 
@@ -80,23 +104,33 @@ void Cpu::SB() {
 }
 
 void Cpu::SH() {
+    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
+    if (address % 2 != 0) {
+        ExceptionHandler(Exception::BadStoreAddress);
+        return;
+    }
+
     if ((m_regs.copr.sr & 0x10000) != 0) {
         m_emulator.log("Cache Isolated, ignoring write\n");
         return;
     }
 
-    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
     u16 value = (u16)m_regs.get(m_instruction.rt);
     m_emulator.m_mem.write16(address, value);
 }
 
 void Cpu::SW() {
+    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
+    if (address % 4 != 0) {
+        ExceptionHandler(Exception::BadStoreAddress);
+        return;
+    }
+
     if ((m_regs.copr.sr & 0x10000) != 0) {
         m_emulator.log("Cache Isolated, ignoring write\n");
         return;
     }
 
-    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
     u32 value = m_regs.get(m_instruction.rt);
     m_emulator.m_mem.write32(address, value);
 }
@@ -104,12 +138,33 @@ void Cpu::SW() {
 // ALU
 
 // TODO: overflow for ADDI
-void Cpu::ADD() { ADDU(); }
+void Cpu::ADD() {
+    s32 rs = m_regs.get(m_instruction.rs);
+    s32 rt = m_regs.get(m_instruction.rt);
+    u32 value = rs + rt;
+
+    bool overflow = ((rs ^ value) & (rt ^ value)) >> 31;
+    if (overflow) {
+        ExceptionHandler(Exception::Overflow);
+        return;
+    }
+
+    if (m_instruction.rd != 0) {
+        m_regs.set(m_instruction.rd, value);
+    }
+}
 
 void Cpu::ADDI() {
-    u32 rs = m_regs.get(m_instruction.rs);
+    s32 rs = m_regs.get(m_instruction.rs);
     s32 imm = m_instruction.immse;
     u32 value = rs + imm;
+
+    bool overflow = ((rs ^ value) & (imm ^ value)) >> 31;
+    if (overflow) {
+        ExceptionHandler(Exception::Overflow);
+        return;
+    }
+
     if (m_instruction.rt != 0) {
         m_regs.set(m_instruction.rt, value);
     }
@@ -353,15 +408,12 @@ void Cpu::REGIMM() {
 void Cpu::COP0() {
     switch (m_instruction.rs) {
         case 0:
-            m_emulator.log("MFC0\n");
             MFC0();
             break;
         case 4:
-            m_emulator.log("MTC0\n");
             MTC0();
             break;
         case 16:
-            m_emulator.log("RFE\n");
             RFE();
             break;
         default:
@@ -370,20 +422,13 @@ void Cpu::COP0() {
 }
 
 void Cpu::MTC0() {
-    switch (m_instruction.rd) {
-        case 12: {
-            u32 value = m_regs.gpr.r[m_instruction.rt];
-            m_regs.copr.sr = value;
-            break;
-        }
-        default:
-            m_emulator.log("MTC0 unmatched cop0 register\n");
-    }
+    u32 val = m_regs.get(m_instruction.rt);
+    m_regs.setcopr(m_instruction.rd, val);
 }
 
 void Cpu::MFC0() {
-    if (!m_instruction.rt) return;
-    int val = m_regs.getcopr(m_instruction.rd);
+    checkPendingLoad();
+    u32 val = m_regs.getcopr(m_instruction.rd);
     m_regs.ld_target = m_instruction.rt;
     m_regs.ld_value = val;
     m_loadDelay = true;
@@ -391,7 +436,7 @@ void Cpu::MFC0() {
 
 // Unimplemented Instructions
 
-void Cpu::Unknown() { panic("Unknown instruction"); }
+void Cpu::Unknown() { panic("Unknown instruction at {:#x}, opcode {:#x}\n", m_regs.pc, m_instruction.ins); }
 
 void Cpu::BREAK() { panic("[Unimplemented] BREAK instruction\n"); }
 void Cpu::CFC2() { panic("[Unimplemented] CFC2 instruction\n"); }
@@ -406,7 +451,6 @@ void Cpu::MTC2() { panic("[Unimplemented] MTC2 instruction\n"); }
 void Cpu::MULT() { panic("[Unimplemented] MULT instruction\n"); }
 void Cpu::MULTU() { panic("[Unimplemented] MULTU instruction\n"); }
 void Cpu::NOR() { panic("[Unimplemented] NOR instruction\n"); }
-void Cpu::RFE() { panic("[Unimplemented] RFE instruction\n"); }
 void Cpu::SLLV() { panic("[Unimplemented] SLLV instruction\n"); }
 void Cpu::SRAV() { panic("[Unimplemented] SRAV instruction\n"); }
 void Cpu::SRLV() { panic("[Unimplemented] SRLV instruction\n"); }

@@ -49,5 +49,5 @@ class Emulator {
     Cpu m_cpu{*this};
     Logger m_logger;
 
-    bool m_enableLog = true;
+    bool m_enableLog = false;
 };
