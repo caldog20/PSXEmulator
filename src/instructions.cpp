@@ -40,6 +40,7 @@ void Cpu::Special() {
 }
 
 void Cpu::SYSCALL() { ExceptionHandler(Exception::Syscall); }
+void Cpu::BREAK() { ExceptionHandler(Exception::Break); }
 
 void Cpu::NOP() { log("NOP\n"); }
 
@@ -104,6 +105,43 @@ void Cpu::LW() {
     if (address == 0x1f801810) m_regs.ld_value = 0;
     m_loadDelay = true;
 }
+
+void Cpu::LWL() {
+    u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
+
+    u32 addr_aligned = address & ~3;
+    u32 value = m_emulator.m_mem.read32(addr_aligned);
+
+    u32 final = value;
+
+    if (m_inLoadDelaySlot) {
+        u32 pending = m_regs.ld_value;
+
+        switch (address & 3) {
+            case 0: {
+                final = (pending & 0x00ffffff) | (value << 24);
+                break;
+            }
+            case 1: {
+                final = (pending & 0xffff) | (value << 16);
+                break;
+            }
+            case 2: {
+                final = (pending & 0xff) | (value << 8);
+                break;
+            }
+            case 3:
+                final = pending | value;
+                break;
+        }
+    }
+
+    m_loadDelay = true;
+    m_regs.ld_target = m_instruction.rt;
+    m_regs.ld_value = final;
+}
+
+void Cpu::LWR() { panic("[Unimplemented] LWR instruction\n"); }
 
 void Cpu::SB() {
     if ((m_regs.copr.sr & 0x10000) != 0) {
@@ -200,6 +238,23 @@ void Cpu::ADDU() {
     m_regs.set(m_instruction.rd, value);
 }
 
+void Cpu::SUB() {
+    if (!m_instruction.rd) return;
+    s32 rs = m_regs.get(m_instruction.rs);
+    s32 rt = m_regs.get(m_instruction.rt);
+
+    s32 value = rs = rt;
+
+    bool overflow = ((rs ^ value) & (~rt ^ value)) >> 31;
+    if (overflow) {
+        ExceptionHandler(Exception::Overflow);
+        return;
+    }
+    if (m_instruction.rd) {
+        m_regs.set(m_instruction.rd, value);
+    }
+}
+
 void Cpu::SUBU() {
     if (!m_instruction.rd) return;
 
@@ -214,6 +269,7 @@ void Cpu::OR() {
 }
 
 void Cpu::ORI() {
+    if (!m_instruction.rt) return;
     u32 value = m_regs.get(m_instruction.rs) | m_instruction.imm;
     m_regs.set(m_instruction.rt, value);
 }
@@ -231,6 +287,12 @@ void Cpu::XOR() {
     if (!m_instruction.rd) return;
     u32 value = m_regs.get(m_instruction.rs) ^ m_regs.get(m_instruction.rt);
     m_regs.set(m_instruction.rd, value);
+}
+
+void Cpu::XORI() {
+    if (!m_instruction.rt) return;
+    u32 value = m_regs.get(m_instruction.rs) ^ m_instruction.imm;
+    m_regs.set(m_instruction.rt, value);
 }
 
 void Cpu::SLL() {
@@ -319,6 +381,16 @@ void Cpu::DIVU() {
 
     m_regs.spr.hi = dividend % divisor;
     m_regs.spr.lo = dividend / divisor;
+}
+
+void Cpu::MULT() {
+    s64 rs = m_regs.get(m_instruction.rs);
+    s64 rt = m_regs.get(m_instruction.rt);
+
+    s64 value = rs * rt;
+
+    m_regs.spr.hi = static_cast<u32>(value >> 32);
+    m_regs.spr.lo = (u32)value;
 }
 
 void Cpu::MULTU() {
@@ -487,6 +559,8 @@ void Cpu::COP0() {
     }
 }
 
+void Cpu::COP2() { panic("COP2 Instructions not implemented\n"); }
+
 void Cpu::MTC0() {
     u32 val = m_regs.get(m_instruction.rt);
     m_regs.setcopr(m_instruction.rd, val);
@@ -504,21 +578,14 @@ void Cpu::MFC0() {
 
 void Cpu::Unknown() { panic("Unknown instruction at {:#x}, opcode {:#x}\n", m_regs.pc, m_instruction.ins); }
 
-void Cpu::BREAK() { panic("[Unimplemented] BREAK instruction\n"); }
 void Cpu::CFC2() { panic("[Unimplemented] CFC2 instruction\n"); }
-void Cpu::COP2() { panic("[Unimplemented] COP2 instruction\n"); }
+
 void Cpu::CTC2() { panic("[Unimplemented] CTC2 instruction\n"); }
 void Cpu::LWC2() { panic("[Unimplemented] LWC2 instruction\n"); }
-void Cpu::LWL() { panic("[Unimplemented] LWL instruction\n"); }
-void Cpu::LWR() { panic("[Unimplemented] LWR instruction\n"); }
+
 void Cpu::MFC2() { panic("[Unimplemented] MFC2 instruction\n"); }
 void Cpu::MTC2() { panic("[Unimplemented] MTC2 instruction\n"); }
-void Cpu::MULT() { panic("[Unimplemented] MULT instruction\n"); }
 
-void Cpu::SUB() { panic("[Unimplemented] SUB instruction\n"); }
 void Cpu::SWC2() { panic("[Unimplemented] SWC2 instruction\n"); }
 void Cpu::SWL() { panic("[Unimplemented] SWL instruction\n"); }
 void Cpu::SWR() { panic("[Unimplemented] SWR instruction\n"); }
-
-
-void Cpu::XORI() { panic("[Unimplemented] XORI instruction\n"); }
