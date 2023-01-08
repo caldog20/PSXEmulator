@@ -208,6 +208,7 @@ void Cpu::SUBU() {
 }
 
 void Cpu::OR() {
+    if (!m_instruction.rd) return;
     u32 value = m_regs.get(m_instruction.rs) | m_regs.get(m_instruction.rt);
     m_regs.set(m_instruction.rd, value);
 }
@@ -223,6 +224,12 @@ void Cpu::NOR() {
     u32 rt = m_regs.get(m_instruction.rt);
 
     u32 value = !(rs | rt);
+    m_regs.set(m_instruction.rd, value);
+}
+
+void Cpu::XOR() {
+    if (!m_instruction.rd) return;
+    u32 value = m_regs.get(m_instruction.rs) ^ m_regs.get(m_instruction.rt);
     m_regs.set(m_instruction.rd, value);
 }
 
@@ -513,5 +520,5 @@ void Cpu::SWC2() { panic("[Unimplemented] SWC2 instruction\n"); }
 void Cpu::SWL() { panic("[Unimplemented] SWL instruction\n"); }
 void Cpu::SWR() { panic("[Unimplemented] SWR instruction\n"); }
 
-void Cpu::XOR() { panic("[Unimplemented] XOR instruction\n"); }
+
 void Cpu::XORI() { panic("[Unimplemented] XORI instruction\n"); }
