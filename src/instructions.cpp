@@ -1,13 +1,22 @@
 #include "cpu.hpp"
 #include "emulator.hpp"
 
+using Helpers::isBitSet;
 using Helpers::log;
 using Helpers::panic;
 
 void Cpu::ExceptionHandler(Exception cause) {
     u32 sr = m_regs.copr.sr;
 
-    u32 handler_address = (sr & (1 << 22)) ? 0xbfc00180 : 0x80000080;
+    bool handler = isBitSet(sr, 22);
+
+    u32 handler_address{};
+
+    if (handler) {
+        handler_address = 0xbfc00180;
+    } else {
+        handler_address = 0x80000080;
+    }
 
     sr = (sr & ~0x3f) | ((sr & 0x3f) << 2) & 0x3f;
     m_regs.copr.sr = sr;
@@ -50,17 +59,15 @@ void Cpu::LUI() { m_regs.set(m_instruction.rt, m_instruction.immlui); }
 
 void Cpu::LB() {
     checkPendingLoad();
-    m_regs.ld_target = m_instruction.rt;
     u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = static_cast<s8>(m_emulator.m_mem.read8(addr));
+    pendingLoad(m_instruction.rt, static_cast<s8>(m_emulator.m_mem.psxRead8(addr)));
     m_loadDelay = true;
 }
 
 void Cpu::LBU() {
     checkPendingLoad();
-    m_regs.ld_target = m_instruction.rt;
     u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    m_regs.ld_value = m_emulator.m_mem.read8(address);
+    pendingLoad(m_instruction.rt, m_emulator.m_mem.psxRead8(address));
     m_loadDelay = true;
 }
 
@@ -71,9 +78,7 @@ void Cpu::LH() {
         return;
     }
     checkPendingLoad();
-    m_regs.ld_target = m_instruction.rt;
-
-    m_regs.ld_value = static_cast<s16>(m_emulator.m_mem.read16(address));
+    pendingLoad(m_instruction.rt, static_cast<s16>(m_emulator.m_mem.psxRead16(address)));
     m_loadDelay = true;
 }
 
@@ -84,8 +89,7 @@ void Cpu::LHU() {
         return;
     }
     checkPendingLoad();
-    m_regs.ld_target = m_instruction.rt;
-    m_regs.ld_value = m_emulator.m_mem.read16(address);
+    pendingLoad(m_instruction.rt, m_emulator.m_mem.psxRead16(address));
     m_loadDelay = true;
 }
 
@@ -96,9 +100,7 @@ void Cpu::LW() {
         return;
     }
     checkPendingLoad();
-    m_regs.ld_target = m_instruction.rt;
-
-    m_regs.ld_value = m_emulator.m_mem.read32(address);
+    pendingLoad(m_instruction.rt, m_emulator.m_mem.psxRead32(address));
 
     // TEMP FIX FOR MISSING GPU
     if (address == 0x1f801814) m_regs.ld_value = 0x10000000;
@@ -110,7 +112,7 @@ void Cpu::LWL() {
     u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
 
     u32 addr_aligned = address & ~3;
-    u32 value = m_emulator.m_mem.read32(addr_aligned);
+    u32 value = m_emulator.m_mem.psxRead32(addr_aligned);
 
     u32 final = value;
 
@@ -135,10 +137,8 @@ void Cpu::LWL() {
                 break;
         }
     }
-
+    pendingLoad(m_instruction.rt, final);
     m_loadDelay = true;
-    m_regs.ld_target = m_instruction.rt;
-    m_regs.ld_value = final;
 }
 
 void Cpu::LWR() { panic("[Unimplemented] LWR instruction\n"); }
@@ -151,7 +151,7 @@ void Cpu::SB() {
 
     u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
     u8 value = m_regs.get(m_instruction.rt);
-    m_emulator.m_mem.write8(address, value);
+    m_emulator.m_mem.psxWrite8(address, value);
 }
 
 void Cpu::SH() {
@@ -167,7 +167,7 @@ void Cpu::SH() {
     }
 
     u16 value = (u16)m_regs.get(m_instruction.rt);
-    m_emulator.m_mem.write16(address, value);
+    m_emulator.m_mem.psxWrite16(address, value);
 }
 
 void Cpu::SW() {
@@ -184,7 +184,7 @@ void Cpu::SW() {
     }
 
     u32 value = m_regs.get(m_instruction.rt);
-    m_emulator.m_mem.write32(address, value);
+    m_emulator.m_mem.psxWrite32(address, value);
 }
 
 // ALU
@@ -284,6 +284,7 @@ void Cpu::NOR() {
 }
 
 void Cpu::XOR() {
+    panic("TEMPORARY TEST\n");
     if (!m_instruction.rd) return;
     u32 value = m_regs.get(m_instruction.rs) ^ m_regs.get(m_instruction.rt);
     m_regs.set(m_instruction.rd, value);
@@ -427,7 +428,7 @@ void Cpu::J() {
 void Cpu::JAL() {
     m_branchDelay = true;
     m_regs.jumppc = (m_regs.pc & 0xf0000000) | (m_instruction.tar << 2);
-    m_regs.linkpc = m_regs.pc + 8;
+    m_regs.link_pc = m_regs.pc + 8;
 }
 
 void Cpu::JR() {

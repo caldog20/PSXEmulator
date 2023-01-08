@@ -1,38 +1,39 @@
 #pragma once
 
 #include "emulator.hpp"
+#include "mem.hpp"
+
+#define INCREMENT (0x200)
+#define SETCOUNT(index) (index + INCREMENT)
 
 class MemViewer {
   public:
     MemViewer(Emulator& emulator) : m_emulator(emulator) {}
 
-    void draw();
-    void walkBios();
-    void walkRam();
-    void walkScratch();
-    void walkHw();
-    void walkPara();
-
     enum REGION { BIOS, RAM, SCRATCHPAD, HWREG, PARA };
+
+    void draw();
+    void walkRegion(REGION region);
 
     void search(REGION region, u32 address);
 
     void clear() {
-        m_bios.clear();
-        m_ram.clear();
-        m_hw.clear();
-        m_scratch.clear();
-        m_para.clear();
+        m_showMemory = false;
+        m_search = false;
     };
 
     bool m_draw = false;
 
+    u32 m_index = 0xbfc00000;
+    u32 m_count = SETCOUNT(m_index);
+
+    bool m_showMemory = false;
+
+    bool m_search = false;
+    u32 m_searchAddress{};
+    REGION m_searchRegion = REGION::BIOS;
+
   private:
     Emulator& m_emulator;
-
-    std::vector<u32> m_bios;
-    std::vector<u32> m_ram;
-    std::vector<u32> m_hw;
-    std::vector<u32> m_scratch;
-    std::vector<u32> m_para;
+    Memory& m_psxMem{m_emulator.m_mem};
 };

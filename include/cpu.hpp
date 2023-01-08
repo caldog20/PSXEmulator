@@ -1,7 +1,3 @@
-//
-// Created by Caleb Yates on 1/4/23.
-//
-
 #pragma once
 #include <map>
 
@@ -10,6 +6,9 @@
 
 class Emulator;
 
+#define START_PC (0xbfc00000)
+
+// Registers
 typedef union {
     struct {
         u32 zero, at, v0, v1, a0, a1, a2, a3;
@@ -73,7 +72,7 @@ struct Regs {
     u32 pc;
     u32 jumppc;
     u32 next_pc;
-    u32 linkpc;
+    u32 link_pc;
     u32 backup_pc;
     u32 ld_target;
     u32 ld_value;
@@ -82,14 +81,12 @@ struct Regs {
     u32 cycles;
 
     bool writeBack = false;
-    void handlePendingLoad();
 
     void markWbIndex(u32 index) { ld_target = index; }
 
     void cancelLoad() {
         if (writeBack) writeBack = false;
     }
-    void pendingLoad() { writeBack = true; }
 
     void set(u32 reg, u32 value) { gpr.r[reg] = value; }
     void setcopr(u32 reg, u32 value) { copr.r[reg] = value; }
@@ -103,21 +100,43 @@ struct Regs {
     }
 };
 
-#define OPCODE(instruction) ((instruction >> 26))
-#define RT(instruction) ((instruction >> 16) & 0x1F)
-#define RS(instruction) ((instruction >> 21) & 0x1F)
-#define IM(instruction) ((u16)instruction)
-#define IMM(instruction) (instruction & 0xffff)
-#define TAR(instruction) (instruction & 0x03ffffff)
-#define SA(instruction) ((instruction >> 6) & 0x1F)
-#define FN(instruction) ((instruction)&0x3F)
-#define RD(instruction) ((instruction >> 11) & 0x1F)
-#define IMMSE(instruction) (s16(instruction))
-#define IMMLUI(instruction) (instruction << 16)
-#define BGEZ(instruction) ((instruction >> 16) & 1)
-#define B_LINK(instruction) ((instruction >> 20) & 1)
-// #define BT(pc) ((s16)IM * 4 + pc)
-#define START_PC (0xbfc00000)
+// Instruction Decoder
+
+struct Instruction {
+    u32 ins;
+    u32 opcode;
+    u32 rs;
+    u32 rt;
+    u32 imm;
+    u32 tar;
+    u32 sa;
+    u32 fn;
+    u32 rd;
+    u32 im;
+    u32 immse;
+    u32 immlui;
+    u32 bgez;
+    u32 b_link;
+
+    Instruction(u32 instruction) { set(instruction); }
+
+    void set(u32 instruction) {
+        ins = instruction;
+        opcode = instruction >> 26;
+        rs = (instruction >> 21) & 0x1f;
+        rt = (instruction >> 16) & 0x1F;
+        imm = instruction & 0xffff;
+        fn = instruction & 0x3f;
+        sa = (instruction >> 6) & 0x1f;
+        tar = instruction & 0x03ffffff;
+        rd = (instruction >> 11) & 0x1F;
+        im = (u16)instruction;
+        immse = (s16)instruction;
+        immlui = instruction << 16;
+        bgez = (instruction >> 16) & 1;
+        b_link = (instruction >> 20) & 1;
+    }
+};
 
 using Helpers::log;
 
@@ -136,66 +155,21 @@ class Cpu {
     void handleLoadDelay();
     void handleBranchDelay();
 
-    Emulator& m_emulator;
+    inline void pendingLoad(u32 rt, u32 value) {
+        m_regs.ld_target = rt;
+        m_regs.ld_value = value;
+    }
+
     Regs m_regs;
     bool m_loadDelay = false;
     bool m_inLoadDelaySlot = false;
     bool m_branchDelay = false;
     bool m_inBranchDelaySlot = false;
     bool m_branching = false;
-    u32 pendingLoad = 0;
+    u32 m_pendingLoad = 0;
 
-    struct instruction {
-        u32 ins;
-        u32 opcode;
-        u32 rs;
-        u32 rt;
-        u32 imm;
-        u32 tar;
-        u32 sa;
-        u32 fn;
-        u32 rd;
-        u32 im;
-        u32 immse;
-        u32 immlui;
-        u32 bgez;
-        u32 b_link;
-
-        instruction(u32 instruction) : ins(instruction) {
-            opcode = OPCODE(instruction);
-            rs = RS(instruction);
-            rt = RT(instruction);
-            imm = IMM(instruction);
-            fn = FN(instruction);
-            sa = SA(instruction);
-            tar = TAR(instruction);
-            rd = RD(instruction);
-            im = IM(instruction);
-            immse = IMMSE(instruction);
-            immlui = IMMLUI(instruction);
-            bgez = BGEZ(instruction);
-            b_link = B_LINK(instruction);
-        }
-
-        void set(u32 instruction) {
-            ins = instruction;
-            opcode = OPCODE(instruction);
-            rs = RS(instruction);
-            rt = RT(instruction);
-            imm = IMM(instruction);
-            fn = FN(instruction);
-            sa = SA(instruction);
-            tar = TAR(instruction);
-            rd = RD(instruction);
-            im = IM(instruction);
-            immse = IMMSE(instruction);
-            immlui = IMMLUI(instruction);
-            bgez = BGEZ(instruction);
-            b_link = B_LINK(instruction);
-        }
-    };
-
-    instruction m_instruction{0};
+    Instruction m_instruction{0};
+    Emulator& m_emulator;
 
   private:
     void ExceptionHandler(Exception cause);

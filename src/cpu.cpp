@@ -24,16 +24,16 @@ void Cpu::reset() {
 
 void Cpu::fetch() {
     m_regs.gpr.zero = 0;
-    m_instruction.set(m_emulator.m_mem.read32(m_regs.pc));
+    m_instruction.set(m_emulator.m_mem.psxRead32(m_regs.pc));
     m_emulator.log("Current PC: {:#x} Instruction: {:#x}\n", m_regs.pc, m_instruction.ins);
     //    logMnemonic();
 }
 
 void Cpu::checkPendingLoad() {
-    pendingLoad += 1;
-    if (pendingLoad == 2) {
+    m_pendingLoad += 1;
+    if (m_pendingLoad == 2) {
         m_regs.set(m_regs.ld_target, m_regs.ld_value);
-        pendingLoad -= 1;
+        m_pendingLoad -= 1;
         m_loadDelay = false;
         m_inLoadDelaySlot = false;
     }
@@ -46,7 +46,7 @@ void Cpu::handleLoadDelay() {
         }
         m_loadDelay = false;
         m_inLoadDelaySlot = false;
-        pendingLoad = 0;
+        m_pendingLoad = 0;
     }
 
     if (m_loadDelay) {
@@ -59,9 +59,9 @@ void Cpu::handleBranchDelay() {
         m_regs.pc = m_regs.jumppc;
         m_regs.next_pc = m_regs.jumppc + 4;
         m_regs.jumppc = 0;
-        if (m_regs.linkpc) {
-            m_regs.gpr.ra = m_regs.linkpc;
-            m_regs.linkpc = 0;
+        if (m_regs.link_pc) {
+            m_regs.gpr.ra = m_regs.link_pc;
+            m_regs.link_pc = 0;
         }
         if (m_loadDelay) {
             m_inLoadDelaySlot = true;
@@ -103,7 +103,7 @@ void Cpu::step() {
     m_emulator.checktoBreak();
 
     // TEMP FIX FOR MISSING GPU
-    *(u32*)(m_emulator.m_mem.m_hw.get() + 0xe8) = 0;
+    m_emulator.m_mem.write32(m_emulator.m_mem.m_hw, 0xe8, 0);
 }
 
 void Cpu::logMnemonic() {

@@ -46,24 +46,33 @@ struct Mapper {
 class Memory {
   public:
     Memory(Emulator& emulator) : m_emulator(emulator) { init(); }
-    ~Memory() = default;
+    ~Memory();
 
     void init();
     void reset();
 
-    u8 read8(u32 address);
-    u16 read16(u32 address);
-    u32 read32(u32 address);
+    u8 psxRead8(u32 address);
+    u16 psxRead16(u32 address);
+    u32 psxRead32(u32 address);
 
-    void write8(u32 address, u8 value);
-    void write16(u32 address, u16 value);
-    void write32(u32 address, u32 value);
+    void psxWrite8(u32 address, u8 value);
+    void psxWrite16(u32 address, u16 value);
+    void psxWrite32(u32 address, u32 value);
 
-    std::unique_ptr<u8[]> m_ram = nullptr;
-    std::unique_ptr<u8[]> m_bios = nullptr;
-    std::unique_ptr<u8[]> m_scratch = nullptr;
-    std::unique_ptr<u8[]> m_hw = nullptr;
-    std::unique_ptr<u8[]> m_para = nullptr;
+    u8 read8(u8* region, u32 offset);
+    u16 read16(u8* region, u32 offset);
+    u32 read32(u8* region, u32 offset);
+
+    void write8(u8* region, u32 offset, u8 value);
+    void write16(u8* region, u32 offset, u16 value);
+    void write32(u8* region, u32 offset, u32 value);
+
+    u8* m_ram = nullptr;
+    u8* m_bios = nullptr;
+    u8* m_scratch = nullptr;
+    u8* m_hw = nullptr;
+    u8* m_para = nullptr;
+
     u32 m_cacheControl = 0;
 
     const Range<u32> BIOS = Range<u32>(BIOS_BASE, BIOS_SIZE);
@@ -74,5 +83,7 @@ class Memory {
     const Range<u32> MEMCONTROL = Range<u32>(0x1f801000, MEMCONTROL_SIZE);
     const Range<u32> CACHECONTROL = Range<u32>(0xFFFE0130, CACHECONTROL_SIZE);
     const Range<u32> EXP1 = Range<u32>(0x1f000084, 4);
+
+  private:
     Emulator& m_emulator;
 };

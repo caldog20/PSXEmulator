@@ -5,7 +5,6 @@
 void Emulator::step() {
     log("Step\n");
     m_cpu.step();
-    log("End Step\n\n");
 }
 
 void Emulator::runFrame() {
@@ -22,7 +21,7 @@ void Emulator::loadBios(const std::string& path) {
         log("Invalid BIOS File\n");
         return;
     }
-    std::memcpy(m_mem.m_bios.get(), bios.data(), bios.size());
+    std::memcpy(m_mem.m_bios, bios.data(), bios.size());
     m_cpu.fetch();
 }
 

@@ -48,7 +48,7 @@ size_t Disassembly::disassembleBios() {
     cs_insn* insn;
     size_t count;
 
-    const uint8_t* buffer = m_emulator.m_mem.m_bios.get();
+    const uint8_t* buffer = m_emulator.m_mem.m_bios;
     const size_t bufferSize = 512 * 1024;
 
     if (buffer == nullptr) {
