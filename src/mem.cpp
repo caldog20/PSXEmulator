@@ -90,6 +90,8 @@ u16 Memory::read16(u32 address) {
     }
     u32 hw_address = address & 0x1fffffff;
 
+    if (address == 0x1F801074) return 0;
+
     if (CACHECONTROL.contains(address)) {
         m_emulator.log("read16 CACHECONTROL address: {:#x}, hw_address {:#x}\n", address, hw_address);
         u16 final = m_cacheControl;
@@ -146,10 +148,6 @@ u32 Memory::read32(u32 address) {
     if (address % 4 != 0) {
         m_emulator.log("Unaligned read32 at address {:#x}\n", address);
         return 0;
-    }
-
-    if (address == 0x000000b0) {
-        int a = 5;
     }
 
     u32 hw_address = address & 0x1fffffff;

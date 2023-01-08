@@ -6,13 +6,10 @@ using Helpers::panic;
 
 void Cpu::ExceptionHandler(Exception cause) {
     u32 sr = m_regs.copr.sr;
-    std::bitset<32> b_sr{sr};
 
-    u32 handler_address = (b_sr[22]) ? 0xbfc00180 : 0x80000080;
+    u32 handler_address = (sr & (1 << 22)) ? 0xbfc00180 : 0x80000080;
 
-    u32 mode = sr & 0x3f;
-    sr &= ~0x3f;
-    sr |= (mode << 2) & 0x3f;
+    sr = (sr & ~0x3f) | ((sr & 0x3f) << 2) & 0x3f;
     m_regs.copr.sr = sr;
 
     m_regs.copr.cause = static_cast<u32>(cause) << 2;
@@ -101,6 +98,10 @@ void Cpu::LW() {
     m_regs.ld_target = m_instruction.rt;
 
     m_regs.ld_value = m_emulator.m_mem.read32(address);
+
+    // TEMP FIX FOR MISSING GPU
+    if (address == 0x1f801814) m_regs.ld_value = 0x10000000;
+    if (address == 0x1f801810) m_regs.ld_value = 0;
     m_loadDelay = true;
 }
 
@@ -133,6 +134,7 @@ void Cpu::SH() {
 
 void Cpu::SW() {
     u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
+
     if (address % 4 != 0) {
         ExceptionHandler(Exception::BadStoreAddress);
         return;
@@ -237,6 +239,24 @@ void Cpu::SRA() {
     m_regs.set(m_instruction.rd, value);
 }
 
+void Cpu::SRAV() {
+    if (!m_instruction.rd) return;
+    s32 rt = m_regs.get(m_instruction.rt);
+    u32 rs = m_regs.get(m_instruction.rs);
+
+    u32 value = rt >> (rs & 0x1f);
+    m_regs.set(m_instruction.rd, value);
+}
+
+void Cpu::SRLV() {
+    if (!m_instruction.rd) return;
+    u32 rt = m_regs.get(m_instruction.rt);
+    u32 rs = m_regs.get(m_instruction.rs);
+
+    u32 value = rt >> (rs & 0x1f);
+    m_regs.set(m_instruction.rd, value);
+}
+
 void Cpu::SRL() {
     if (!m_instruction.rd) return;
     u32 value = m_regs.get(m_instruction.rt) >> m_instruction.sa;
@@ -292,6 +312,16 @@ void Cpu::DIVU() {
 
     m_regs.spr.hi = dividend % divisor;
     m_regs.spr.lo = dividend / divisor;
+}
+
+void Cpu::MULTU() {
+    u64 rs = m_regs.get(m_instruction.rs);
+    u64 rt = m_regs.get(m_instruction.rt);
+
+    u64 value = rs * rt;
+
+    m_regs.spr.hi = static_cast<u32>(value >> 32);
+    m_regs.spr.lo = (u32)value;
 }
 
 void Cpu::MFLO() {
@@ -477,10 +507,7 @@ void Cpu::LWR() { panic("[Unimplemented] LWR instruction\n"); }
 void Cpu::MFC2() { panic("[Unimplemented] MFC2 instruction\n"); }
 void Cpu::MTC2() { panic("[Unimplemented] MTC2 instruction\n"); }
 void Cpu::MULT() { panic("[Unimplemented] MULT instruction\n"); }
-void Cpu::MULTU() { panic("[Unimplemented] MULTU instruction\n"); }
 
-void Cpu::SRAV() { panic("[Unimplemented] SRAV instruction\n"); }
-void Cpu::SRLV() { panic("[Unimplemented] SRLV instruction\n"); }
 void Cpu::SUB() { panic("[Unimplemented] SUB instruction\n"); }
 void Cpu::SWC2() { panic("[Unimplemented] SWC2 instruction\n"); }
 void Cpu::SWL() { panic("[Unimplemented] SWL instruction\n"); }

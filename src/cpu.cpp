@@ -101,6 +101,9 @@ void Cpu::step() {
 
     fetch();
     m_emulator.checktoBreak();
+
+    // TEMP FIX FOR MISSING GPU
+    *(u32*)(m_emulator.m_mem.m_hw.get() + 0xe8) = 0;
 }
 
 void Cpu::logMnemonic() {
