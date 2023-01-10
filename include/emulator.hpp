@@ -37,11 +37,11 @@ class Emulator {
     }
 
     bool isRunning = false;
-    int framesPassed = 0;
-    u32 m_breakPc = 0xbfc00000;
+    bool m_biosLoaded = false;
     bool m_break = false;
-
+    u32 m_breakPc = 0xbfc00000;
     std::array<u8, width * height * 4> framebuffer;  // An 160x144 RGBA framebuffer
+    int framesPassed = 0;
 
     Emulator() { framebuffer.fill(0xFF); }
 

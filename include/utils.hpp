@@ -21,6 +21,18 @@ using s64 = std::int64_t;
 
 namespace Helpers {
 
+template <typename ReturnType, typename  V>
+constexpr ReturnType SExtend(V value) {
+    return static_cast<ReturnType>(static_cast<typename std::make_signed<ReturnType>::type>(static_cast<typename std::make_signed<V>::type>(value)));
+}
+
+template <typename ReturnType, typename  V>
+constexpr ReturnType ZExtend(V value) {
+    return static_cast<ReturnType>(static_cast<typename std::make_unsigned<ReturnType>::type>(static_cast<typename std::make_unsigned<V>::type>(value)));
+}
+
+
+
 template <typename T>
 struct Range {
     Range(T begin, T size) : start(begin), length(size) {

@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "utils.hpp"
+#include "BitField.hpp"
+
 class Emulator;
 
 #define BIOS_BASE (0x1fc00000)
@@ -24,6 +26,16 @@ class Emulator;
 using Helpers::Range;
 
 enum class REGION { NONE, BIOS, RAM, SCRATCHPAD, IO, CACHE_CONTROL };
+
+
+union CacheControl {
+    BitField<3, 1, u32> scratchpad_enable_1;
+    BitField<7, 1, u32> scratchpad_enable_2;
+    BitField<9, 1, u32> crash_mode;
+    BitField<11, 1, u32> code_cache_enable;
+    u32 r;
+};
+
 
 template <typename T>
 struct Mapper {
@@ -74,6 +86,7 @@ class Memory {
     u8* m_para = nullptr;
 
     u32 m_cacheControl = 0;
+    CacheControl cacheControl{};
 
     const Range<u32> BIOS = Range<u32>(BIOS_BASE, BIOS_SIZE);
     const Range<u32> RAM = Range<u32>(RAM_BASE, RAM_SIZE);

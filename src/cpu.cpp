@@ -24,9 +24,8 @@ void Cpu::reset() {
 
 void Cpu::fetch() {
     m_regs.gpr.zero = 0;
-    m_instruction.set(m_emulator.m_mem.psxRead32(m_regs.pc));
-    m_emulator.log("Current PC: {:#x} Instruction: {:#x}\n", m_regs.pc, m_instruction.ins);
-    //    logMnemonic();
+    m_instruction = m_emulator.m_mem.psxRead32(m_regs.pc);
+    m_emulator.log("Current PC: {:#x} Instruction: {:#x}\n", m_regs.pc, m_instruction.code);
 }
 
 void Cpu::checkPendingLoad() {
@@ -40,13 +39,10 @@ void Cpu::checkPendingLoad() {
 }
 
 void Cpu::handleLoadDelay() {
+    if (m_inLoadDelaySlot && testCancelLoad()) clearLoadDelay();
     if (m_loadDelay && m_inLoadDelaySlot) {
-        if (m_instruction.rt != m_regs.ld_target) {
-            m_regs.set(m_regs.ld_target, m_regs.ld_value);
-        }
-        m_loadDelay = false;
-        m_inLoadDelaySlot = false;
-        m_pendingLoad = 0;
+        m_regs.wbLoadDelay();
+        clearLoadDelay();
     }
 
     if (m_loadDelay) {

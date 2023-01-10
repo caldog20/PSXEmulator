@@ -27,7 +27,7 @@ void DebugInfo::draw() {
     }
 
     ImGui::Text("Current PC: 0x%08x", m_emulator.m_cpu.m_regs.pc);
-    ImGui::Text("Current Instruction: 0x%08x", curIns.ins);
+    ImGui::Text("Current Instruction: 0x%08x", curIns.code);
     ImGui::Text("Current Opcode: 0x%08x", curIns.opcode);
     ImGui::Text("Jump PC: 0x%08x", m_emulator.m_cpu.m_regs.jumppc);
     //    ImGui::Text("Instruction Counter %lu", m_emulator.m_cpu->m_counter);
@@ -77,7 +77,7 @@ void DebugInfo::draw() {
         ImGui::TableSetColumnIndex(0);
         ImGui::TextUnformatted("instruction");
         ImGui::TableSetColumnIndex(1);
-        ImGui::Text("0x%08x", curIns.ins);
+        ImGui::Text("0x%08x", curIns.code);
         ImGui::TableNextRow();
 
         ImGui::TableSetColumnIndex(0);

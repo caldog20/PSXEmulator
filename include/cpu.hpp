@@ -3,140 +3,13 @@
 
 #include "exceptions.hpp"
 #include "utils.hpp"
+#include "instruction_decoder.hpp"
+#include "regs.hpp"
 
 class Emulator;
 
 #define START_PC (0xbfc00000)
 
-// Registers
-typedef union {
-    struct {
-        u32 zero, at, v0, v1, a0, a1, a2, a3;
-        u32 t0, t1, t2, t3, t4, t5, t6, t7;
-        u32 s0, s1, s2, s3, s4, s5, s6, s7;
-        u32 t8, t9, k0, k1, gp, sp, fp, ra;
-    };
-    u32 r[32];
-} gpr_t;
-
-typedef union {
-    struct {
-        u32 lo;
-        u32 hi;
-    };
-    u32 r[2];
-} spr_t;
-
-typedef union {
-    struct {
-        u32 index;
-        u32 rand;
-        u32 elo0;
-        u32 bpc;
-        u32 context;
-        u32 bda;
-        u32 pmask;
-        u32 dcic;
-        u32 bvaddr;
-        u32 bdam;
-        u32 ehi;
-        u32 bpcm;
-        u32 sr;
-        u32 cause;
-        u32 epc;
-        u32 prid;
-        u32 config;
-        u32 lladdr;
-        u32 watchlo;
-        u32 watchhi;
-        u32 xcontent;
-        u32 rsv1;
-        u32 rsv2;
-        u32 rsv3;
-        u32 rsv4;
-        u32 rsv5;
-        u32 ecc;
-        u32 cacheerr;
-        u32 taglo;
-        u32 taghi;
-        u32 errepc;
-        u32 rsv6;
-    };
-    u32 r[32];
-} copr_t;
-
-struct Regs {
-    gpr_t gpr;
-    spr_t spr;
-    copr_t copr;
-    u32 pc;
-    u32 jumppc;
-    u32 next_pc;
-    u32 link_pc;
-    u32 backup_pc;
-    u32 ld_target;
-    u32 ld_value;
-    u32 opcode;
-    u32 count;
-    u32 cycles;
-
-    bool writeBack = false;
-
-    void markWbIndex(u32 index) { ld_target = index; }
-
-    void cancelLoad() {
-        if (writeBack) writeBack = false;
-    }
-
-    void set(u32 reg, u32 value) { gpr.r[reg] = value; }
-    void setcopr(u32 reg, u32 value) { copr.r[reg] = value; }
-
-    u32 get(u32 reg) { return gpr.r[reg]; }
-    u32 getcopr(u32 reg) { return copr.r[reg]; }
-
-    void nextpc() {
-        pc += 4;
-        next_pc += 4;
-    }
-};
-
-// Instruction Decoder
-
-struct Instruction {
-    u32 ins;
-    u32 opcode;
-    u32 rs;
-    u32 rt;
-    u32 imm;
-    u32 tar;
-    u32 sa;
-    u32 fn;
-    u32 rd;
-    u32 im;
-    u32 immse;
-    u32 immlui;
-    u32 bgez;
-    u32 b_link;
-
-    Instruction(u32 instruction) { set(instruction); }
-
-    void set(u32 instruction) {
-        ins = instruction;
-        opcode = instruction >> 26;
-        rs = (instruction >> 21) & 0x1f;
-        rt = (instruction >> 16) & 0x1F;
-        imm = instruction & 0xffff;
-        fn = instruction & 0x3f;
-        sa = (instruction >> 6) & 0x1f;
-        tar = instruction & 0x03ffffff;
-        rd = (instruction >> 11) & 0x1F;
-        im = (u16)instruction;
-        immse = (s16)instruction;
-        immlui = instruction << 16;
-        bgez = (instruction >> 16) & 1;
-        b_link = (instruction >> 20) & 1;
-    }
-};
 
 using Helpers::log;
 
@@ -156,8 +29,24 @@ class Cpu {
     void handleBranchDelay();
 
     inline void pendingLoad(u32 rt, u32 value) {
-        m_regs.ld_target = rt;
-        m_regs.ld_value = value;
+        m_regs.markWbIndex(rt);
+        m_regs.setWbValue(value);
+        m_loadDelay = true;
+    }
+
+    inline bool testCancelLoad() {
+        if (m_regs.ld_target == m_instruction.rt) {
+            return true;
+        }
+        return false;
+    }
+
+    inline void clearLoadDelay() {
+        m_loadDelay = false;
+        m_inLoadDelaySlot = false;
+        m_pendingLoad = 0;
+        m_regs.ld_target = 0;
+        m_regs.ld_value = 0;
     }
 
     Regs m_regs;

@@ -4,6 +4,8 @@
 using Helpers::isBitSet;
 using Helpers::log;
 using Helpers::panic;
+using Helpers::SExtend;
+using Helpers::ZExtend;
 
 void Cpu::ExceptionHandler(Exception cause) {
     u32 sr = m_regs.copr.sr;
@@ -34,7 +36,7 @@ void Cpu::ExceptionHandler(Exception cause) {
 }
 
 void Cpu::RFE() {
-    if ((m_instruction.ins & 0x3f) != 0x10) {
+    if ((m_instruction.code & 0x3f) != 0x10) {
         m_emulator.log("RFE: Unmatched cop0 instruction\n");
         return;
     }
@@ -55,20 +57,18 @@ void Cpu::NOP() { log("NOP\n"); }
 
 // LOAD STORE INSTRUCTIONS
 
-void Cpu::LUI() { m_regs.set(m_instruction.rt, m_instruction.immlui); }
+void Cpu::LUI() { m_regs.set(m_instruction.rt, m_instruction.imm << 16); }
 
 void Cpu::LB() {
     checkPendingLoad();
     u32 addr = m_regs.get(m_instruction.rs) + m_instruction.immse;
-    pendingLoad(m_instruction.rt, static_cast<s8>(m_emulator.m_mem.psxRead8(addr)));
-    m_loadDelay = true;
+    pendingLoad(m_instruction.rt, SExtend<u32, u8>(m_emulator.m_mem.psxRead8(addr)));
 }
 
 void Cpu::LBU() {
     checkPendingLoad();
     u32 address = m_regs.get(m_instruction.rs) + m_instruction.immse;
     pendingLoad(m_instruction.rt, m_emulator.m_mem.psxRead8(address));
-    m_loadDelay = true;
 }
 
 void Cpu::LH() {
@@ -78,8 +78,7 @@ void Cpu::LH() {
         return;
     }
     checkPendingLoad();
-    pendingLoad(m_instruction.rt, static_cast<s16>(m_emulator.m_mem.psxRead16(address)));
-    m_loadDelay = true;
+    pendingLoad(m_instruction.rt, SExtend<u32, u16>(m_emulator.m_mem.psxRead16(address)));
 }
 
 void Cpu::LHU() {
@@ -90,7 +89,6 @@ void Cpu::LHU() {
     }
     checkPendingLoad();
     pendingLoad(m_instruction.rt, m_emulator.m_mem.psxRead16(address));
-    m_loadDelay = true;
 }
 
 void Cpu::LW() {
@@ -105,7 +103,6 @@ void Cpu::LW() {
     // TEMP FIX FOR MISSING GPU
     if (address == 0x1f801814) m_regs.ld_value = 0x10000000;
     if (address == 0x1f801810) m_regs.ld_value = 0;
-    m_loadDelay = true;
 }
 
 void Cpu::LWL() {
@@ -138,7 +135,6 @@ void Cpu::LWL() {
         }
     }
     pendingLoad(m_instruction.rt, final);
-    m_loadDelay = true;
 }
 
 void Cpu::LWR() { panic("[Unimplemented] LWR instruction\n"); }
@@ -166,7 +162,7 @@ void Cpu::SH() {
         return;
     }
 
-    u16 value = (u16)m_regs.get(m_instruction.rt);
+    u16 value = m_regs.get(m_instruction.rt);
     m_emulator.m_mem.psxWrite16(address, value);
 }
 
@@ -569,15 +565,13 @@ void Cpu::MTC0() {
 
 void Cpu::MFC0() {
     checkPendingLoad();
-    u32 val = m_regs.getcopr(m_instruction.rd);
-    m_regs.ld_target = m_instruction.rt;
-    m_regs.ld_value = val;
-    m_loadDelay = true;
+    u32 value = m_regs.getcopr(m_instruction.rd);
+    pendingLoad(m_instruction.rt, value);
 }
 
 // Unimplemented Instructions
 
-void Cpu::Unknown() { panic("Unknown instruction at {:#x}, opcode {:#x}\n", m_regs.pc, m_instruction.ins); }
+void Cpu::Unknown() { panic("Unknown instruction at {:#x}, opcode {:#x}\n", m_regs.pc, m_instruction.code); }
 
 void Cpu::CFC2() { panic("[Unimplemented] CFC2 instruction\n"); }
 
